@@ -4,7 +4,9 @@ const Navbar = ({ onMenuClick, user }) => {
       <div className="flex h-16 items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={onMenuClick}
+            aria-label="Open navigation menu"
             className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 lg:hidden"
           >
             ☰

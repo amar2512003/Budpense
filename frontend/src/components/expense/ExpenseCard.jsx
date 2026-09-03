@@ -31,21 +31,29 @@ const ExpenseCard = ({
           - {formatCurrency(expense.amount)}
         </p>
 
-        <div className="hidden gap-1 sm:flex">
-          <button
-            onClick={() => onEdit?.(expense)}
-            className="rounded-md px-2 py-1 text-xs text-gray-600 hover:bg-gray-100"
-          >
-            Edit
-          </button>
+        {(onEdit || onDelete) && (
+          <div className="hidden gap-1 sm:flex">
+            {onEdit && (
+              <button
+                type="button"
+                onClick={() => onEdit(expense)}
+                className="rounded-md px-2 py-1 text-xs text-gray-600 hover:bg-gray-100"
+              >
+                Edit
+              </button>
+            )}
 
-          <button
-            onClick={() => onDelete?.(expense)}
-            className="rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50"
-          >
-            Delete
-          </button>
-        </div>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(expense)}
+                className="rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+              >
+                Delete
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
