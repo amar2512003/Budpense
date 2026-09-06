@@ -192,7 +192,7 @@ http://localhost:5173
 Create a `.env` file inside `frontend/`:
 
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5001/api
 ```
 
 Adjust the API URL according to your backend configuration.
@@ -209,7 +209,7 @@ npm run dev
 `.env`:
 
 ```env
-PORT=5000
+PORT=5001
 NODE_ENV=development
 MONGO_URI=your_mongodb_connection
 JWT_SECRET=your_secret
@@ -220,7 +220,7 @@ CLIENT_URL=http://localhost:5173
 The server refuses to start without `MONGO_URI` or `JWT_SECRET`. Check it is up:
 
 ```bash
-curl http://localhost:5000/api/health
+curl http://localhost:5001/api/health
 ```
 
 ### Structure

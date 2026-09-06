@@ -1,6 +1,13 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import dotenv from "dotenv";
 
-dotenv.config();
+// Resolve .env against the backend root, not the current working directory,
+// so the server starts the same way from anywhere.
+const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+
+dotenv.config({ path: path.join(backendRoot, ".env") });
 
 const REQUIRED = ["MONGO_URI", "JWT_SECRET"];
 
@@ -14,7 +21,7 @@ if (missing.length > 0) {
 }
 
 const env = {
-  port: Number(process.env.PORT) || 5000,
+  port: Number(process.env.PORT) || 5001,
   nodeEnv: process.env.NODE_ENV || "development",
   mongoUri: process.env.MONGO_URI,
   jwtSecret: process.env.JWT_SECRET,

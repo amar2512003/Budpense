@@ -12,6 +12,12 @@ import routes from "./routes/index.js";
 
 const app = express();
 
+// Render and Railway put the app behind a proxy. Without this the rate limiter
+// sees the proxy's IP for every request and puts all users in one bucket.
+if (env.isProduction) {
+  app.set("trust proxy", 1);
+}
+
 app.use(helmet());
 
 // Explicit origin: a wildcard cannot be combined with credentialed requests.
