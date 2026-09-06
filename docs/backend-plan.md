@@ -21,7 +21,7 @@ backend/
 │   ├── validators/   auth · expense · budget
 │   ├── app.js
 │   └── server.js
-├── .env · .env.example · .gitignore · package.json · README.md
+├── .env · .env.example · .gitignore · package.json
 ```
 
 `app.js` builds and exports the app; `server.js` connects to Mongo then listens. Layering rule: `routes → controller → service → model → MongoDB`. A controller holding a Mongoose query has skipped a layer.
