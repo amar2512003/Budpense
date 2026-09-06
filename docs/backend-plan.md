@@ -51,7 +51,7 @@ helmet → cors({ origin: CLIENT_URL, credentials: true }) → express.json()
 ## Environment
 
 ```env
-PORT=5000
+PORT=5001
 NODE_ENV=development
 MONGO_URI=
 JWT_SECRET=
@@ -60,8 +60,6 @@ CLIENT_URL=http://localhost:5173
 ```
 
 `config/env.js` validates these at boot and throws listing what's missing. Everything else imports from it rather than reading `process.env` directly.
-
-> **Note:** `frontend/.env` currently points at `http://localhost:5001/api`. Either the backend runs on 5001 or that file changes to 5000 — pick one before starting #26.
 
 ## Response contract
 
@@ -176,7 +174,7 @@ maxAge:   7 days
 path:     "/"
 ```
 
-`sameSite: "none"` requires `secure: true`. Locally `:5173` and `:5000` are same-site so `lax` works. Logout must clear the cookie with the **same** options — a mismatched `path` or `sameSite` leaves it in place.
+`sameSite: "none"` requires `secure: true`. Locally `:5173` and `:5001` are same-site so `lax` works. Logout must clear the cookie with the **same** options — a mismatched `path` or `sameSite` leaves it in place.
 
 ### Budget response
 
