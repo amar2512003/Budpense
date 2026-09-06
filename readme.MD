@@ -1,6 +1,8 @@
-# Budpense — Frontend
+# Budpense
 
 A modern **MERN-based budgeting and expense tracking application** that helps users manage expenses, income, budgets, and financial reports with secure authentication.
+
+The repository is a monorepo: `frontend/` holds the React application, `backend/` the Express API.
 
 ## 🚀 Features
 
@@ -194,6 +196,61 @@ VITE_API_URL=http://localhost:5000/api
 ```
 
 Adjust the API URL according to your backend configuration.
+
+## 🖥️ Backend
+
+```bash
+cd backend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+`.env`:
+
+```env
+PORT=5000
+NODE_ENV=development
+MONGO_URI=your_mongodb_connection
+JWT_SECRET=your_secret
+JWT_EXPIRES_IN=7d
+CLIENT_URL=http://localhost:5173
+```
+
+The server refuses to start without `MONGO_URI` or `JWT_SECRET`. Check it is up:
+
+```bash
+curl http://localhost:5000/api/health
+```
+
+### Structure
+
+```text
+backend/src/
+├── config/       env.js · db.js
+├── controllers/
+├── models/
+├── routes/
+├── middleware/
+├── services/
+├── utils/
+├── validators/
+├── app.js        builds and exports the Express app
+└── server.js     connects to Mongo, then listens
+```
+
+Request path: `routes → controller → service → model → MongoDB`.
+
+### Response shape
+
+```json
+{ "success": true, "data": {} }
+{ "success": false, "message": "Route not found" }
+```
+
+Throw `ApiError(status, message)` for anything the client should see; anything else becomes a generic 500. Mongoose validation, cast and duplicate-key errors are converted centrally, so controllers need no try/catch.
+
+Implementation plan: [`docs/backend-plan.md`](docs/backend-plan.md)
 
 ## 📊 Current Development Status
 
