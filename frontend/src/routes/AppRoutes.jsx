@@ -23,137 +23,44 @@ import Dashboard from "../pages/dashboard/Dashboard";
 import Expenses from "../pages/expenses/Expenses";
 import AddExpense from "../pages/expenses/AddExpense";
 import EditExpense from "../pages/expenses/EditExpense";
-import Budgets from "../pages/budgets/Budgets";
 import Income from "../pages/income/Income";
-import Reports from "../pages/reports/Reports";
-import Profile from "../pages/profile/Profile";
 
 import NotFound from "../pages/NotFound";
+
+// TODO(feature/budgets-reports-profile): add Budgets, Reports, and Profile
+// routes here to complete the app.
 
 const AppRoutes = () => {
   return (
     <Routes>
 
-      {/* =========================
-          PUBLIC ROUTES
-      ========================= */}
-
+      {/* PUBLIC ROUTES */}
       <Route element={<PublicRoute />}>
         <Route element={<AuthLayout />}>
-
-          <Route
-            path="/login"
-            element={<Login />}
-          />
-
-          <Route
-            path="/register"
-            element={<Register />}
-          />
-
-          <Route
-            path="/forgot-password"
-            element={<ForgotPassword />}
-          />
-
-          <Route
-            path="/reset-password/:token"
-            element={<ResetPassword />}
-          />
-
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Route>
       </Route>
 
-
-      {/* =========================
-          PROTECTED ROUTES
-      ========================= */}
-
+      {/* PROTECTED ROUTES */}
       <Route element={<ProtectedRoute />}>
-
-        <Route
-          path="/app"
-          element={<DashboardLayout />}
-        >
-
-          <Route
-            index
-            element={
-              <Navigate
-                to="/app/dashboard"
-                replace
-              />
-            }
-          />
-
-          <Route
-            path="dashboard"
-            element={<Dashboard />}
-          />
-
-          <Route
-            path="expenses"
-            element={<Expenses />}
-          />
-
-          <Route
-            path="expenses/add"
-            element={<AddExpense />}
-          />
-
-          <Route
-            path="expenses/:id/edit"
-            element={<EditExpense />}
-          />
-
-          <Route
-            path="income"
-            element={<Income />}
-          />
-
-          <Route
-            path="budgets"
-            element={<Budgets />}
-          />
-
-          <Route
-            path="reports"
-            element={<Reports />}
-          />
-
-          <Route
-            path="profile"
-            element={<Profile />}
-          />
-
+        <Route path="/app" element={<DashboardLayout />}>
+          <Route index element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="expenses" element={<Expenses />} />
+          <Route path="expenses/add" element={<AddExpense />} />
+          <Route path="expenses/:id/edit" element={<EditExpense />} />
+          <Route path="income" element={<Income />} />
         </Route>
-
       </Route>
 
+      {/* ROOT */}
+      <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
 
-      {/* =========================
-          ROOT
-      ========================= */}
-
-      <Route
-        path="/"
-        element={
-          <Navigate
-            to="/app/dashboard"
-            replace
-          />
-        }
-      />
-
-
-      {/* =========================
-          404
-      ========================= */}
-
-      <Route
-        path="*"
-        element={<NotFound />}
-      />
+      {/* 404 */}
+      <Route path="*" element={<NotFound />} />
 
     </Routes>
   );
