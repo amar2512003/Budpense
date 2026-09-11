@@ -350,3 +350,87 @@ Verbatim, in order.
 1. `okay ensure the commits are in small logical batches and that none of the commits have any mention of claude and that they are all one liners`
 2. `command to git push?`
 3. `https://github.com/amar2512003/Budpense/issues/7 now solve this one, take all instructions given before into consideration as well`
+
+---
+
+## Session — 11 September 2026 (third)
+
+### Objective
+
+Implement issue #8 — the expense and income API, with filtering, sorting and
+pagination — on the auth work from #6 and #7.
+
+### Work produced
+
+Branch `feature/expense-income-api`, derived from `feature/profile-password-reset`.
+
+- **`constants/enums.js`** — the categories, payment methods and income sources,
+  as lowercase slugs, in one file. Resolves open decision 3; `education` and
+  `travel` are included, which `ExpenseForm.jsx` still lacks.
+- **`models/Expense.js`** — one collection for both sides of the ledger, split
+  by `type`, with `category` required for expenses and `source` for income
+  through type-dependent `required` functions, and the index the plan asks for.
+- **`services/expense.service.js`** — list, get, create, update, delete. The
+  owner is part of every query rather than a check that follows it, so someone
+  else's record is not found rather than forbidden.
+- **`controllers/expense.controller.js`** — one factory returning the five
+  handlers bound to a type; `/expenses` and `/income` are the same handlers over
+  the same service, which is open decision 1's "thin second router".
+- **`validators/expense.js`**, **`utils/escapeRegex.js`**, and the two routers.
+
+Resolved open decision 1 and 3 as the plan proposed. The frontend half of
+decision 3 — adding `education` and `travel` to `ExpenseForm.jsx` — is left for
+the integration issue, where the rest of the frontend changes live.
+
+### Verification performed
+
+55 assertions against a real `mongod`, plus #6's 48 and #7's 45 re-run. All
+green on the committed tree, and the whole CRUD cycle driven from a real browser.
+
+| Check | Method | Result |
+|---|---|---|
+| Create, read, update, delete | Live server, both routers | 201/200/200/200, and the record gone afterwards |
+| Body cannot set identity | Posted `user`, `type` and `_id` in the body | All three ignored; the record belonged to the caller, typed by its route |
+| Cross-type fields | Posted `category`, `title`, `paymentMethod` to `/income` | Dropped by the per-type allowlist, not stored |
+| Another user's record | Read, updated and deleted Bob's record as Alice | 404 each time, and the record still there afterwards |
+| Wrong router | Fetched an expense's id through `/income` | 404 — the type is part of the query |
+| Malformed id | `GET /expenses/not-an-id` | 400, not a 500 or a leaked `_id` cast error |
+| Filters | `category`, `source`, `month`, `startDate`/`endDate`, `search` | Each exact; both range ends inclusive; month covering only its own month |
+| Regex safety | Searched `.`, `(large)`, and `(a+)+(a+)+…$` | Escaped: 0 hits, 1 hit, and a 2 ms response |
+| Sorting | All four orders | Correct, with `_id` as tie-break so paging cannot repeat a row |
+| Paging | `limit=2&page=2`, `limit=5000`, an empty result | Right slice, capped at 100, and `pages: 1` for an empty list |
+| Index | `collection.indexes()` **and** `explain()` on the list query | Present, and actually chosen — `IXSCAN`, not a collection scan |
+| **Real browser** | Chrome on `:5173`, the exact body `ExpenseForm.jsx` submits | Create, read, update, list, delete all worked cross-origin |
+
+### Assessment
+
+| Task | Tool | Helped? | What had to be corrected |
+|---|---|---|---|
+| Model, service, routers | Claude Code | Yes | Nothing structural |
+| Query parameter sanitising | Claude Code | **No** | Express 5 exposes `req.query` through a getter, so express-validator's `.toDate()` and `.toInt()` cannot write back and every filter arrived as a raw string. `startDate` crashed outright — but `page` and `limit` *passed*, because `"2" - 1` and `Math.min("5000", 100)` coerce. Two green assertions were green for the wrong reason. Fixed by reading `matchedData(req, { locations: ["query"] })`, which also drops unrecognised parameters. |
+| Filter that does not apply | Claude Code | Partly | `/income?category=food` returned every income record with a 200, because an unvalidated parameter is simply dropped. The test had asserted a 400 that the code never implemented — so the test was wrong, but its expectation was the better behaviour, and the code changed to match rather than the test. |
+| Search field choice | Claude Code | Yes | Read what each page's own search box filters on today and matched it, rather than inventing a field list. |
+
+### Notes for the retrospective
+
+- **A passing test is not evidence that the mechanism works.** The paging
+  assertions passed while the sanitiser they depended on was doing nothing;
+  JavaScript's coercion covered for it. The date filter is the only reason any
+  of it was found, and only because a `Date` method does not exist on a string.
+- Silently ignoring a filter is worse than refusing it. A request that filtered
+  on nothing still answers 200 with a full list, and nothing in the response
+  says the filter was dropped.
+- `Income.jsx` renders `entry.date` directly. The API returns an ISO timestamp,
+  so that field will need formatting during integration; it is not a backend
+  concern but it will look like one.
+
+### Prompts issued
+
+Verbatim, in order.
+
+1. ```
+   gh pr create --base main --head feature/auth-api --title "feat: auth API — register, login, logout and session check" --body "Closes #6"
+    give me 7 ib this format
+   ```
+2. `nooooo base is main`
+3. `https://github.com/amar2512003/Budpense/issues/8 lets solve this issue, ensure you follow all the instructions from the previous issue solution`
