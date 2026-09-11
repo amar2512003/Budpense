@@ -8,6 +8,7 @@ import morgan from "morgan";
 import env from "./config/env.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 import notFoundMiddleware from "./middleware/notFound.middleware.js";
+import authRoutes from "./routes/auth.routes.js";
 
 const app = express();
 
@@ -35,7 +36,7 @@ app.get("/api/health", (_req, res) => {
   res.json({ success: true, data: { status: "ok", environment: env.nodeEnv } });
 });
 
-// Feature routers mount on /api here.
+app.use("/api/auth", authRoutes);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
