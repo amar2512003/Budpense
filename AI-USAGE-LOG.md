@@ -263,3 +263,90 @@ was executed, not reasoned about.
 Verbatim, in order.
 
 1. `https://github.com/amar2512003/Budpense/issues/6 solve this issue, ensure you complete everything in the checklist and then ensure that there are no ai slop code changes and that everything you do is correct. do not take the longer route, do what is necessary. complete the issue in detail`
+
+---
+
+## Session — 11 September 2026 (second)
+
+### Objective
+
+Implement issue #7 — password reset and the profile endpoints — on top of the
+auth API from #6.
+
+### Work produced
+
+Branch `feature/profile-password-reset`, derived from `feature/auth-api`
+because #7 depends on code that is not in `main` yet.
+
+- **Reset fields on `User`** — `resetToken` and `resetTokenExp`, both
+  `select: false`.
+- **`POST /auth/forgot-password`, `POST /auth/reset-password/:token`** — token
+  is 32 random bytes, stored as a SHA-256 hash with a 15-minute expiry, matched
+  by hash *and* expiry in one query and cleared on use, so a link works once.
+  Rate limited 5 / 15 min like the other credential routes.
+- **`GET`/`PUT /users/me`, `PUT /users/change-password`** — one router behind a
+  single `router.use(protect)`, since every route on it acts on the caller's own
+  record and no other. `change-password` verifies the current password first.
+- **`validators/fields.js`** — `name`, `email` and new-password rules extracted
+  from `validators/auth.js`, now shared with `validators/user.js`. Register and
+  a profile update have to normalise an email identically or the two disagree
+  about which row they mean.
+- **`backend/README.md`** — how to run it, the environment table, and the
+  console-only reset link, which criterion 4 asks to be written down.
+
+Open decision 2 resolved as the plan proposed: profile lives at `/api/users`.
+The two lines in the frontend's `authService.js` that still point at
+`/auth/profile` are left for the integration issue, which is where the plan
+puts them.
+
+### Verification performed
+
+45 new assertions against a real `mongod`, plus the 48 from #6 re-run to catch
+what the validator extraction might have broken. Both suites green on the
+committed tree.
+
+| Check | Method | Result |
+|---|---|---|
+| Reset link contents | Captured the server's console output | `CLIENT_URL/reset-password/<64 hex>`, the raw token nowhere in the response |
+| Unknown address | Compared both responses byte for byte | Identical 200, and nothing logged — the console does not leak the answer either |
+| Token at rest | Read the stored document | SHA-256 of the raw token, `select: false`, expiry 15.00 minutes out |
+| Single use | Replayed a consumed link, and an expired one | 400 both times, same message for expired as for forged |
+| Reset actually resets | Logged in with old and new passwords afterwards | Old 401, new 200, new hash at cost 12 |
+| Reset is not a sign-in | Inspected the response | No cookie set |
+| Profile read | `/users/me` vs `/auth/me` | Same user, no password or reset fields in either |
+| Profile update | Changed name and email, then logged in again | Trimmed and lowercased, password hash untouched, login still worked |
+| Email clash | Took another account's address, then kept my own | 409, then 200 — a no-op email change is not a clash |
+| Body injection | Sent `currency`, `_id` and `password` to `PUT /users/me` | All ignored; the stored password was unchanged |
+| change-password | Wrong current, short new, missing current, correct | 401 / 400 / 400 / 200, and a failed attempt left the old password working |
+| Rate limit | Six calls to `/forgot-password` | 6th → 429 in the `{ success, message }` shape |
+| **Real browser** | Chrome on `:5173`, credentialed `PUT`s to `:5001` | Profile update, change-password and the full console-link reset all worked cross-origin; replaying the link afterwards returned 400 |
+
+### Assessment
+
+| Task | Tool | Helped? | What had to be corrected |
+|---|---|---|---|
+| Reset flow | Claude Code | Yes | Nothing — the criteria name the failure modes precisely enough to build against |
+| Saving a partially selected document | Claude Code | Partly | `forgot-password` saves a user loaded *without* the password field. Mongoose skipping validation on unselected paths is what makes that safe; that was an assumption until the test proved it, and it would have failed as a 500 on the first real request. |
+| Token validation | Claude Code | Partly | The first plan validated the `:token` parameter's shape in the validator, which would have answered a bad link with `"Validation failed"`. Dropped: the lookup rejects it anyway, and the service's message is the one the user needs to read. |
+| Sharing field rules | Claude Code | Yes | Extracting `fields.js` re-touched code #6 had already verified, so #6's suite was re-run rather than assumed. |
+| Keeping the test suites | Claude Code | **No** | The #7 suite was deleted during cleanup and then a service signature changed, leaving nothing to re-run. It had to be rewritten from scratch to re-verify. The suites now live in the scratchpad, not the repo working directory. |
+
+### Notes for the retrospective
+
+- The endpoint that returns the least is the one carrying the most design.
+  `/forgot-password` answers one fixed sentence; everything interesting about it
+  is what it declines to say, in the body *and* in the log.
+- `/users/me` and `/auth/me` return the same thing today, which is what the plan
+  describes. That is worth revisiting only if the profile grows fields the
+  session check has no business fetching.
+- A stale reset link still works after a deliberate password change, until it
+  expires. Clearing the token there would be one line; it is not in #7's scope,
+  so it is recorded here rather than added quietly.
+
+### Prompts issued
+
+Verbatim, in order.
+
+1. `okay ensure the commits are in small logical batches and that none of the commits have any mention of claude and that they are all one liners`
+2. `command to git push?`
+3. `https://github.com/amar2512003/Budpense/issues/7 now solve this one, take all instructions given before into consideration as well`
