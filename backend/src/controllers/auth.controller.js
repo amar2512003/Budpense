@@ -30,3 +30,22 @@ export function logout(_req, res) {
 export function me(req, res) {
   res.json({ success: true, data: { user: req.user } });
 }
+
+export async function forgotPassword(req, res) {
+  await authService.requestPasswordReset(req.body.email);
+
+  // The same answer whether or not the address is registered. Anything that
+  // varied here would turn the endpoint into a directory of who has an account.
+  res.json({
+    success: true,
+    data: { message: "If that account exists, a reset link has been sent" },
+  });
+}
+
+export async function resetPassword(req, res) {
+  await authService.resetPassword({ token: req.params.token, password: req.body.password });
+
+  // Deliberately no cookie: resetting a password is not a sign-in, and the
+  // client sends the user to the login form afterwards.
+  res.json({ success: true, data: { message: "Password reset successfully" } });
+}
