@@ -258,3 +258,20 @@ Budpense follows a modular architecture where:
 ## 📄 License
 
 This project is currently developed as an academic/project application.
+
+## Running it locally
+
+Both halves start with one command from the repository root:
+
+```bash
+npm run setup   # first time only: installs root, backend and frontend
+npm run dev     # API on :5001 and the app on :5173, together
+```
+
+`npm run dev` runs both and stops both if either exits. The backend needs
+`backend/.env` first — copy `backend/.env.example` and fill in `MONGO_URI` and
+`JWT_SECRET` (`openssl rand -hex 32` makes a good secret). The frontend reads
+`VITE_API_URL` from `frontend/.env`, which defaults to the API on port 5001.
+
+`npm test` runs the frontend test suite.
+

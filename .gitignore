@@ -1,2 +1,5 @@
 .DS_Store
 **/.DS_Store
+
+# Root tooling only; backend and frontend keep their own
+node_modules
