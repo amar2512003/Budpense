@@ -6,7 +6,9 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "node --watch src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "db": "node scripts/local-mongo.mjs",
+    "dev:local": "node scripts/wait-for-db.mjs && node --watch src/server.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -20,5 +22,8 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.19.1",
     "morgan": "^1.10.1"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.2.0"
   }
 }
