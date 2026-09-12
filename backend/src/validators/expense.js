@@ -6,6 +6,7 @@ import {
   INCOME_SOURCES,
   PAYMENT_METHODS,
 } from "../constants/enums.js";
+import { inList } from "./fields.js";
 
 const SORTS = ["newest", "oldest", "highest", "lowest"];
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -13,8 +14,6 @@ const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 // The forms submit every field, blank ones included, so an optional field has
 // to treat "" as absent rather than as a value that fails its enum check.
 const optional = (chain) => chain.optional({ values: "falsy" });
-
-const inList = (list) => `Choose one of: ${list.join(", ")}`;
 
 // The filter belonging to the other type is refused rather than ignored: a
 // request that filtered on nothing would hand back every record as though it

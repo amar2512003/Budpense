@@ -5,6 +5,9 @@ import { body } from "express-validator";
 // case never matches the row it created; the same is true of a profile update
 // and a reset request, so the rule lives in one place for all of them.
 
+/** The message every enum-backed field uses when it is given something else. */
+export const inList = (list) => `Choose one of: ${list.join(", ")}`;
+
 export const nameRule = () =>
   body("name")
     .trim()
