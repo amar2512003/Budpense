@@ -63,7 +63,14 @@ async function spendByPeriod(userId, budgets) {
   return new Map(totals.map((total) => [periodKey(total._id), total.spent]));
 }
 
-function toPublicBudget(budget, spent) {
+// Summing doubles leaves tails like 0.30000000000000004. Money is reported to
+// two places so the figure is one a person could write down, and so a tail that
+// small cannot decide whether a budget counts as overspent.
+const toMoney = (value) => Math.round(value * 100) / 100;
+
+function toPublicBudget(budget, rawSpent) {
+  const spent = toMoney(rawSpent);
+
   return {
     _id: budget._id,
     category: budget.category,
@@ -76,7 +83,7 @@ function toPublicBudget(budget, spent) {
     // Both deliberately unclamped. Remaining goes negative and percentage past
     // 100 when a budget is overspent, which is the fact the card needs; it
     // limits its own progress bar.
-    remaining: budget.amount - spent,
+    remaining: toMoney(budget.amount - spent),
     percentage: Math.round((spent / budget.amount) * 10000) / 100,
     isOverBudget: spent > budget.amount,
   };
