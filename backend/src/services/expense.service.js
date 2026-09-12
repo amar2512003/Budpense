@@ -32,7 +32,7 @@ const MAX_LIMIT = 100;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Drops the owner and the version key; the client has no use for either. */
-function toPublicRecord({ user, __v, ...record }) {
+export function toPublicRecord({ user, __v, ...record }) {
   return record;
 }
 

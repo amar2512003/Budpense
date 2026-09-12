@@ -545,3 +545,84 @@ Verbatim, in order.
 3. `the open prs have been merged.. now create a new branch off of main and solve this issue thorougly`
 4. `run an audit to ensure everythings is working properly`
 5. `run an audit to ensure everythings is working properly, stick to this issue`
+
+---
+
+## Session — 12 September 2026 (second)
+
+### Objective
+
+Implement issue #10 — the dashboard aggregation endpoint — branching from
+`main`, which now carries #6 through #9.
+
+### Work produced
+
+Branch `feature/dashboard-endpoint`, derived from `main`.
+
+- **`services/dashboard.service.js`** — the nine documented fields. One `$facet`
+  aggregation over the six-month window covers the month's totals, the category
+  breakdown and the daily series; the budgets and the four recent expenses are
+  two small indexed reads alongside it.
+- **`utils/monthRange.js`** and **`utils/money.js`** — the half-open UTC month
+  range and the two-place money rounding, lifted out of `budget.service.js`
+  because the dashboard needs both. `toPublicRecord` is now exported from
+  `expense.service.js`, so an expense has one shape on the wire wherever it
+  appears.
+- **`controllers/dashboard.controller.js`**, **`routes/dashboard.routes.js`**.
+
+`monthlyTrend` is built from a generated list of the last six months and then
+filled from the grouped result, rather than being read out of it — which is what
+keeps a month with no activity in the series as a zero.
+
+### Verification performed
+
+31 assertions in the suite and 15 more in the audit, plus #6's 48, #7's 45,
+#8's 55, #9's 37 and #9's audit of 18 re-run after the helpers moved. All green.
+
+The suite checks the figures against the frontend's own `utils/finance.js` —
+`totalAmount`, `entriesForMonth`, `categoryTotals`, `sortByNewestDate`,
+`monthlyIncomeExpenseTotals` — imported directly and run over the same records,
+so the endpoint is compared against an oracle written by someone else rather
+than against my own restatement of the rules.
+
+| Check | Result |
+|---|---|
+| Empty account | Zeros throughout, arrays empty, and six months of zeros in the trend |
+| Totals, breakdown, recent | Agree exactly with `finance.js` over the same data |
+| `savingsRate` | 0 when income is 0; −50 when spending outruns income, which is the true figure |
+| `budgetUsed` | 0 with no budgets; 300 when spend is triple the budget — unclamped |
+| `categoryBreakdown` | Display labels, descending, `Uncategorised` for a record with no category |
+| `dailyExpense` | ISO dates, ascending, one row per day, not pre-formatted |
+| `monthlyTrend` | Six months, oldest first; three empty months present as zeros |
+| **Year rollover** | With the clock stubbed to 15 January 2027, the window reads `2026-08 … 2027-01`, and a record one millisecond before it is excluded |
+| **Month edges on a UTC+5:30 server** | First and last instants of the month counted, the previous month's last instant not |
+| Isolation | Another user's ledger appears nowhere |
+| Cost and effects | One aggregation and three finds; no write command issued |
+| **Real browser** | The whole shape returned from a credentialed cross-origin call |
+
+### Assessment
+
+| Task | Tool | Helped? | What had to be corrected |
+|---|---|---|---|
+| The aggregation | Claude Code | Yes | The `$facet` was written against the six-month window so the inner month slices re-match a narrowed stream rather than the whole collection. |
+| `recentExpenses` ordering | Claude Code | **Partly** | The oracle and the endpoint disagreed on two expenses sharing a date. The plan says this field should match `sortByNewestDate(...).slice(0, 4)`, but that function returns 0 for equal dates, so its tie order is whatever order its input array had — an artifact of `Array.sort` being stable, not a rule, and circular once the array comes from this endpoint. Kept `_id` descending, which agrees with `/expenses?sort=newest`, and the assertion now checks the four records and the date order rather than a tie order the reference cannot define. Recorded rather than quietly changed. |
+| `budgetUsed` | Claude Code | Partly | Read literally, as the plan words it: **total** spend over **total** budgeted. With one budget of 8000 and 7150 spent across three categories the card reads 89%, including spend in categories that were never budgeted. That is the specified formula, not an accident, but it is worth a product decision before release. |
+| Testing the year rollover | Claude Code | Yes | The window arithmetic is the one piece here whose bug would appear only in January, so the clock was stubbed rather than reasoned about. |
+
+### Notes for the retrospective
+
+- Using the frontend's own helpers as the oracle was worth more than any
+  assertion I wrote by hand: it compares the endpoint against code written
+  independently, so agreement means something. It also raised the only real
+  design question in the issue, which no hand-written test would have asked.
+- The endpoint has no parameters, so it answers for the current month.
+  `Reports.jsx` charts *all* history through the same three helpers, and the
+  plan says reports reuses this endpoint. Those two cannot both hold. Nothing
+  here guesses at a range parameter; the integration issue should decide.
+
+### Prompts issued
+
+Verbatim, in order.
+
+1. `okay so is the big fixed?`
+2. `now solve this by branching from main again, ensure no ai slop code changes are made and audit your code to ensure it is correct: https://github.com/amar2512003/Budpense/issues/10`
