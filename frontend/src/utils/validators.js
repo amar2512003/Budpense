@@ -86,7 +86,10 @@ export const validateRegister = (data) => {
   }
 
   if (data.password !== data.confirmPassword) {
-    errors.confirmPassword = "Passwords do not match.";
+    errors.confirmPassword =
+      String(data.password).trim() === String(data.confirmPassword).trim()
+        ? "Passwords do not match — check for a space at the start or end."
+        : "Passwords do not match.";
   }
 
   return errors;

@@ -30,7 +30,7 @@ describe("Login", () => {
     show(<Login />);
 
     await user.type(screen.getByLabelText(/email/i), "ada@example.com");
-    await user.type(screen.getByLabelText(/password/i), "a long password");
+    await user.type(screen.getByLabelText(/^password/i), "a long password");
     await user.click(screen.getByRole("button", { name: /sign in|log in|login/i }));
 
     await waitFor(() => expect(service.loginUser).toHaveBeenCalledWith({
@@ -44,7 +44,7 @@ describe("Login", () => {
     show(<Login />);
 
     await user.type(screen.getByLabelText(/email/i), "ada@example.com");
-    await user.type(screen.getByLabelText(/password/i), "wrong password");
+    await user.type(screen.getByLabelText(/^password/i), "wrong password");
     await user.click(screen.getByRole("button", { name: /sign in|log in|login/i }));
 
     expect(await screen.findByText("Incorrect email or password")).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe("Login", () => {
     show(<Login />);
 
     await user.type(screen.getByLabelText(/email/i), "not-an-email");
-    await user.type(screen.getByLabelText(/password/i), "a long password");
+    await user.type(screen.getByLabelText(/^password/i), "a long password");
     await user.click(screen.getByRole("button", { name: /sign in|log in|login/i }));
 
     expect(service.loginUser).not.toHaveBeenCalled();
@@ -132,5 +132,61 @@ describe("Profile", () => {
     await user.click(screen.getByRole("button", { name: /save|update/i }));
 
     expect(await screen.findByText(/already exists/i)).toBeInTheDocument();
+  });
+});
+
+describe("autofilled credentials", () => {
+  // A password manager sets the field's value without firing the events React
+  // listens for, so the component's state stays empty while the box looks full.
+  const autofill = (name, value) => {
+    const field = document.querySelector(`input[name="${name}"]`);
+    field.value = value;
+    return field;
+  };
+
+  it("registers when the confirmation was autofilled rather than typed", async () => {
+    const user = userEvent.setup();
+    service.registerUser.mockResolvedValue({ data: { user: USER } });
+    show(<Register />);
+
+    await user.type(screen.getByLabelText(/full name/i), "Srishti");
+    await user.type(screen.getByLabelText(/email/i), "srishti@example.com");
+    await user.type(screen.getByLabelText(/^password/i), "a long enough password");
+    autofill("confirmPassword", "a long enough password");
+
+    await user.click(screen.getByRole("button", { name: /create|register|sign up/i }));
+
+    await waitFor(() => expect(service.registerUser).toHaveBeenCalled());
+    expect(screen.queryByText(/do not match/i)).not.toBeInTheDocument();
+  });
+
+  it("still refuses a confirmation that genuinely differs", async () => {
+    const user = userEvent.setup();
+    show(<Register />);
+
+    await user.type(screen.getByLabelText(/full name/i), "Srishti");
+    await user.type(screen.getByLabelText(/email/i), "srishti@example.com");
+    await user.type(screen.getByLabelText(/^password/i), "a long enough password");
+    autofill("confirmPassword", "something else entirely");
+
+    await user.click(screen.getByRole("button", { name: /create|register|sign up/i }));
+
+    expect(await screen.findByText(/do not match/i)).toBeInTheDocument();
+    expect(service.registerUser).not.toHaveBeenCalled();
+  });
+
+  it("signs in when the browser filled the password", async () => {
+    const user = userEvent.setup();
+    service.loginUser.mockResolvedValue({ data: { user: USER } });
+    show(<Login />);
+
+    await user.type(screen.getByLabelText(/email/i), "srishti@example.com");
+    autofill("password", "a long enough password");
+
+    await user.click(screen.getByRole("button", { name: /sign in|log in|login/i }));
+
+    await waitFor(() => expect(service.loginUser).toHaveBeenCalledWith({
+      email: "srishti@example.com", password: "a long enough password",
+    }));
   });
 });

@@ -41,3 +41,28 @@ describe("toErrorMessage", () => {
     expect(toErrorMessage(failure({ message: "Validation failed", errors: {} }))).toBe("Validation failed");
   });
 });
+
+describe("validateRegister", () => {
+  const { validateRegister } = await import("../validators");
+
+  const base = { name: "Srishti", email: "srishti@example.com", password: "a long password", confirmPassword: "a long password" };
+
+  it("accepts a matching pair", () => {
+    expect(validateRegister(base)).toEqual({});
+  });
+
+  it("rejects a genuine mismatch", () => {
+    expect(validateRegister({ ...base, confirmPassword: "a different password" }).confirmPassword)
+      .toBe("Passwords do not match.");
+  });
+
+  it("points at the invisible difference when only whitespace differs", () => {
+    expect(validateRegister({ ...base, confirmPassword: "a long password " }).confirmPassword)
+      .toMatch(/space at the start or end/);
+  });
+
+  it("still requires a long enough password", () => {
+    expect(validateRegister({ ...base, password: "short", confirmPassword: "short" }).password)
+      .toMatch(/at least 8/);
+  });
+});
