@@ -504,6 +504,38 @@ after the validator move. All green, and the full cycle driven from a browser.
   through the form. That is the frontend half of decision 3, and it belongs to
   the integration issue.
 
+### Audit of #9 after the fact
+
+Run against the committed branch, through `server.js` itself rather than an
+in-process import, on a server clock set to `Asia/Kolkata` (UTC+5:30) — every
+month boundary in this feature is UTC, and a local-time range would have moved
+both boundary expenses into the wrong month.
+
+18 further assertions, covering what the build-time suite had not:
+
+| Check | Result |
+|---|---|
+| Real boot path | `MongoDB connected` then `API listening`, and the running server built the unique index itself |
+| Month boundaries on a UTC+5:30 clock | 30 Sep `23:59:59.999Z` counted, 1 Oct `00:00Z` not — unchanged by the server's timezone |
+| Spend is recomputed, not cached | Adding, deleting and recategorising an expense each moved the figure with no write to the budget |
+| A budget moved to another month | Reports that month's spend, not the one it was created in |
+| **Five simultaneous identical creates** | 1 × 201, 4 × 409, one row — the index wins the race the service check cannot |
+| Arithmetic | A third of a budget reads 33.33 |
+| Inputs not previously tried | Unpadded `"7"`, an amount as a string, `spent`/`user`/`_id` in the body, an operator object as month — all handled |
+| 19 budgets over 16 periods | Still `find, aggregate`: one pass over the expenses |
+| Error contract | 404, 400, 409, 401 all in the documented shape |
+
+**One defect found and fixed:** `spent` was returned straight from the
+aggregation, so summing fractional amounts shipped `0.30000000000000004` as a
+currency figure, and `remaining` inherited the tail. Both are now rounded to two
+places, which also stops a tail of that size deciding `isOverBudget`. The four
+suites — 48, 45, 55 and 37 assertions — were re-run against the fix.
+
+The audit's own query-count probe failed first, watching a client that was not
+monitoring commands. That is the third instrumentation fault in three sessions
+and the second of exactly this kind; the first version of this check in #9 made
+the same mistake.
+
 ### Prompts issued
 
 Verbatim, in order.
@@ -511,3 +543,5 @@ Verbatim, in order.
 1. `https://github.com/amar2512003/Budpense/issues/9 lets solve this the same way now`
 2. `first create a new branch off of main branch and then solve the issue. dont take the long way dont make ai slop code changes`
 3. `the open prs have been merged.. now create a new branch off of main and solve this issue thorougly`
+4. `run an audit to ensure everythings is working properly`
+5. `run an audit to ensure everythings is working properly, stick to this issue`
