@@ -626,3 +626,81 @@ Verbatim, in order.
 
 1. `okay so is the big fixed?`
 2. `now solve this by branching from main again, ensure no ai slop code changes are made and audit your code to ensure it is correct: https://github.com/amar2512003/Budpense/issues/10`
+
+---
+
+## Session — 12 September 2026 (third)
+
+### Objective
+
+Implement issue #11 — harden and document the backend — after the issue was
+rescoped to drop deployment.
+
+### Work produced
+
+Branch `feature/harden-and-document`, derived from `main`.
+
+- **`backend/README.md` rewritten** to cover all 25 endpoints, the list query
+  parameters, the response contract and the security rules. It previously
+  documented only `/auth` and `/users`, which was accurate when it was written
+  during #7 and had been wrong since #8 shipped.
+- **`frontend/.env` untracked**, `frontend/.gitignore` given the env rules it
+  never had, and `frontend/.env.example` added pointing at port 5001.
+- **Security audit** across every endpoint, and a **production-mode audit**, both
+  run rather than reasoned about.
+
+### Verification performed
+
+15 assertions in the security audit and 13 in the production audit, plus every
+earlier suite re-run: 48, 45, 55, 37, 31, and the #9 and #10 audits of 18 and 15.
+All green.
+
+The security audit **derives the route surface from the route files** — reading
+`app.js` for the mounts and each router for its paths — rather than from a list
+kept by hand, so an endpoint added later is audited without anyone remembering
+to add it to the script. It found 25 endpoints across 6 routers.
+
+| Check | Result |
+|---|---|
+| Session required | Every endpoint but the five public session routes answers 401 without a cookie, checked one by one across all 25 |
+| Identity never read from the request | No source file reads `user`, `userId` or `_id` from a body, query or param; `req.user.id` is the only owner |
+| Injection | `user`, `userId`, `_id` and `type` in a create body ignored; `?user=` on lists and on the dashboard ignored; a profile update cannot retarget another account |
+| Ownership | GET, PUT and DELETE of another user's record all 404, on expenses, income and budgets; the records survived |
+| Passwords | Eight endpoints including both password changes carry no password field, reset token or bcrypt hash; stored value is a cost-12 hash |
+| Rate limits | 100/15 min advertised globally; login, register and forgot-password each allowed exactly five attempts in the window |
+| Production cookie | `Secure`, `SameSite=None`, `HttpOnly`, `Path=/`, seven days; logout clears with identical options |
+| CORS | The configured origin echoed exactly, credentials allowed, a foreign origin never echoed |
+| Error hygiene | 404 and 401 in the documented shape with no stack; helmet's headers present, `x-powered-by` absent |
+| `.env` history | Every commit that ever touched `frontend/.env` held an **empty** file — nothing was ever exposed, so no history rewrite |
+
+### Assessment
+
+| Task | Tool | Helped? | What had to be corrected |
+|---|---|---|---|
+| Deriving the surface | Claude Code | Yes | Reading the routes from source is what makes "every endpoint is guarded" a claim rather than a hope. It counted 25 where a hand-written list would have been stale within a week. |
+| Rate-limit assertion | Claude Code | **No, first attempt** | The check reported register allowing only two attempts. The limiter was correct: the audit's own sign-ups earlier in the run had spent three of the five. The assertion now counts every call it makes and asserts exactly five allowed per window, which is true regardless of what else the run does. |
+| Logout assertion | Claude Code | **No, first attempt** | It asserted that a replayed token stops working after logout. It does not, and never claimed to: the token is stateless, so logout is the browser dropping the cookie. The assertion now records that property explicitly — if revocation is ever added, that line fails and forces the record to be updated — and the README says so plainly. |
+| `.env` in history | Claude Code | Yes | The first instinct was to reach for a history rewrite. Checking the blob at every commit first showed the file was empty in all of them, so untracking and ignoring it was the proportionate fix on a repo with merged PRs. |
+
+### Notes for the retrospective
+
+- Two of this session's three corrections were tests asserting something the
+  system never promised, rather than the system being wrong. Writing down what a
+  feature *does not* guarantee — stateless logout — turned out to be worth more
+  than the assertion that was there before.
+- An audit that enumerates its own subject is worth more than one that enumerates
+  a list someone typed. The route-derivation step is the only reason the claim
+  covers all 25 endpoints.
+- `frontend/src/services/api.js` still falls back to port **5000** while the API
+  listens on **5001**. The fix exists on the unmerged `fix/frontend-api-port`
+  branch. Out of scope here, and the new `frontend/.env.example` carries the
+  right value, but the fallback is still wrong in the merged tree.
+
+### Prompts issued
+
+Verbatim, in order.
+
+1. `we are not deploying right now so update the issue accordingly`
+2. `no delete` (the deferred deployment section, removed from #11)
+3. `now solve this issue following same instructions as before`
+4. `we dont need cookies, this is just a class project`
