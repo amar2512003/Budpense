@@ -34,6 +34,17 @@ const userSchema = new mongoose.Schema(
       default: "INR",
       trim: true,
     },
+    // Both set only while a reset is pending. The token is stored as a hash so
+    // a leaked database cannot be used to take an account over, and the expiry
+    // is read back on lookup rather than trusted from the link.
+    resetToken: {
+      type: String,
+      select: false,
+    },
+    resetTokenExp: {
+      type: Date,
+      select: false,
+    },
   },
   { timestamps: true },
 );

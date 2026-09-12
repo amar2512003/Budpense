@@ -4,7 +4,12 @@ import rateLimit from "express-rate-limit";
 import * as authController from "../controllers/auth.controller.js";
 import protect from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
-import { loginRules, registerRules } from "../validators/auth.js";
+import {
+  forgotPasswordRules,
+  loginRules,
+  registerRules,
+  resetPasswordRules,
+} from "../validators/auth.js";
 
 // Credential endpoints get their own budget on top of the global 100/15 min:
 // five attempts per IP per window makes password guessing impractical. A fresh
@@ -29,5 +34,15 @@ router.post("/login", credentialLimiter(), loginRules, validate, authController.
 // never valid, should still answer 200 rather than strand the client.
 router.post("/logout", authController.logout);
 router.get("/me", protect, authController.me);
+// Limited like the other credential routes: without it this endpoint would
+// happily issue reset links for an address list all afternoon.
+router.post(
+  "/forgot-password",
+  credentialLimiter(),
+  forgotPasswordRules,
+  validate,
+  authController.forgotPassword,
+);
+router.post("/reset-password/:token", resetPasswordRules, validate, authController.resetPassword);
 
 export default router;

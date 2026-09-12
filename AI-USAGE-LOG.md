@@ -263,3 +263,174 @@ was executed, not reasoned about.
 Verbatim, in order.
 
 1. `https://github.com/amar2512003/Budpense/issues/6 solve this issue, ensure you complete everything in the checklist and then ensure that there are no ai slop code changes and that everything you do is correct. do not take the longer route, do what is necessary. complete the issue in detail`
+
+---
+
+## Session — 11 September 2026 (second)
+
+### Objective
+
+Implement issue #7 — password reset and the profile endpoints — on top of the
+auth API from #6.
+
+### Work produced
+
+Branch `feature/profile-password-reset`, derived from `feature/auth-api`
+because #7 depends on code that is not in `main` yet.
+
+- **Reset fields on `User`** — `resetToken` and `resetTokenExp`, both
+  `select: false`.
+- **`POST /auth/forgot-password`, `POST /auth/reset-password/:token`** — token
+  is 32 random bytes, stored as a SHA-256 hash with a 15-minute expiry, matched
+  by hash *and* expiry in one query and cleared on use, so a link works once.
+  Rate limited 5 / 15 min like the other credential routes.
+- **`GET`/`PUT /users/me`, `PUT /users/change-password`** — one router behind a
+  single `router.use(protect)`, since every route on it acts on the caller's own
+  record and no other. `change-password` verifies the current password first.
+- **`validators/fields.js`** — `name`, `email` and new-password rules extracted
+  from `validators/auth.js`, now shared with `validators/user.js`. Register and
+  a profile update have to normalise an email identically or the two disagree
+  about which row they mean.
+- **`backend/README.md`** — how to run it, the environment table, and the
+  console-only reset link, which criterion 4 asks to be written down.
+
+Open decision 2 resolved as the plan proposed: profile lives at `/api/users`.
+The two lines in the frontend's `authService.js` that still point at
+`/auth/profile` are left for the integration issue, which is where the plan
+puts them.
+
+### Verification performed
+
+45 new assertions against a real `mongod`, plus the 48 from #6 re-run to catch
+what the validator extraction might have broken. Both suites green on the
+committed tree.
+
+| Check | Method | Result |
+|---|---|---|
+| Reset link contents | Captured the server's console output | `CLIENT_URL/reset-password/<64 hex>`, the raw token nowhere in the response |
+| Unknown address | Compared both responses byte for byte | Identical 200, and nothing logged — the console does not leak the answer either |
+| Token at rest | Read the stored document | SHA-256 of the raw token, `select: false`, expiry 15.00 minutes out |
+| Single use | Replayed a consumed link, and an expired one | 400 both times, same message for expired as for forged |
+| Reset actually resets | Logged in with old and new passwords afterwards | Old 401, new 200, new hash at cost 12 |
+| Reset is not a sign-in | Inspected the response | No cookie set |
+| Profile read | `/users/me` vs `/auth/me` | Same user, no password or reset fields in either |
+| Profile update | Changed name and email, then logged in again | Trimmed and lowercased, password hash untouched, login still worked |
+| Email clash | Took another account's address, then kept my own | 409, then 200 — a no-op email change is not a clash |
+| Body injection | Sent `currency`, `_id` and `password` to `PUT /users/me` | All ignored; the stored password was unchanged |
+| change-password | Wrong current, short new, missing current, correct | 401 / 400 / 400 / 200, and a failed attempt left the old password working |
+| Rate limit | Six calls to `/forgot-password` | 6th → 429 in the `{ success, message }` shape |
+| **Real browser** | Chrome on `:5173`, credentialed `PUT`s to `:5001` | Profile update, change-password and the full console-link reset all worked cross-origin; replaying the link afterwards returned 400 |
+
+### Assessment
+
+| Task | Tool | Helped? | What had to be corrected |
+|---|---|---|---|
+| Reset flow | Claude Code | Yes | Nothing — the criteria name the failure modes precisely enough to build against |
+| Saving a partially selected document | Claude Code | Partly | `forgot-password` saves a user loaded *without* the password field. Mongoose skipping validation on unselected paths is what makes that safe; that was an assumption until the test proved it, and it would have failed as a 500 on the first real request. |
+| Token validation | Claude Code | Partly | The first plan validated the `:token` parameter's shape in the validator, which would have answered a bad link with `"Validation failed"`. Dropped: the lookup rejects it anyway, and the service's message is the one the user needs to read. |
+| Sharing field rules | Claude Code | Yes | Extracting `fields.js` re-touched code #6 had already verified, so #6's suite was re-run rather than assumed. |
+| Keeping the test suites | Claude Code | **No** | The #7 suite was deleted during cleanup and then a service signature changed, leaving nothing to re-run. It had to be rewritten from scratch to re-verify. The suites now live in the scratchpad, not the repo working directory. |
+
+### Notes for the retrospective
+
+- The endpoint that returns the least is the one carrying the most design.
+  `/forgot-password` answers one fixed sentence; everything interesting about it
+  is what it declines to say, in the body *and* in the log.
+- `/users/me` and `/auth/me` return the same thing today, which is what the plan
+  describes. That is worth revisiting only if the profile grows fields the
+  session check has no business fetching.
+- A stale reset link still works after a deliberate password change, until it
+  expires. Clearing the token there would be one line; it is not in #7's scope,
+  so it is recorded here rather than added quietly.
+
+### Prompts issued
+
+Verbatim, in order.
+
+1. `okay ensure the commits are in small logical batches and that none of the commits have any mention of claude and that they are all one liners`
+2. `command to git push?`
+3. `https://github.com/amar2512003/Budpense/issues/7 now solve this one, take all instructions given before into consideration as well`
+
+---
+
+## Session — 11 September 2026 (third)
+
+### Objective
+
+Implement issue #8 — the expense and income API, with filtering, sorting and
+pagination — on the auth work from #6 and #7.
+
+### Work produced
+
+Branch `feature/expense-income-api`, derived from `feature/profile-password-reset`.
+
+- **`constants/enums.js`** — the categories, payment methods and income sources,
+  as lowercase slugs, in one file. Resolves open decision 3; `education` and
+  `travel` are included, which `ExpenseForm.jsx` still lacks.
+- **`models/Expense.js`** — one collection for both sides of the ledger, split
+  by `type`, with `category` required for expenses and `source` for income
+  through type-dependent `required` functions, and the index the plan asks for.
+- **`services/expense.service.js`** — list, get, create, update, delete. The
+  owner is part of every query rather than a check that follows it, so someone
+  else's record is not found rather than forbidden.
+- **`controllers/expense.controller.js`** — one factory returning the five
+  handlers bound to a type; `/expenses` and `/income` are the same handlers over
+  the same service, which is open decision 1's "thin second router".
+- **`validators/expense.js`**, **`utils/escapeRegex.js`**, and the two routers.
+
+Resolved open decision 1 and 3 as the plan proposed. The frontend half of
+decision 3 — adding `education` and `travel` to `ExpenseForm.jsx` — is left for
+the integration issue, where the rest of the frontend changes live.
+
+### Verification performed
+
+55 assertions against a real `mongod`, plus #6's 48 and #7's 45 re-run. All
+green on the committed tree, and the whole CRUD cycle driven from a real browser.
+
+| Check | Method | Result |
+|---|---|---|
+| Create, read, update, delete | Live server, both routers | 201/200/200/200, and the record gone afterwards |
+| Body cannot set identity | Posted `user`, `type` and `_id` in the body | All three ignored; the record belonged to the caller, typed by its route |
+| Cross-type fields | Posted `category`, `title`, `paymentMethod` to `/income` | Dropped by the per-type allowlist, not stored |
+| Another user's record | Read, updated and deleted Bob's record as Alice | 404 each time, and the record still there afterwards |
+| Wrong router | Fetched an expense's id through `/income` | 404 — the type is part of the query |
+| Malformed id | `GET /expenses/not-an-id` | 400, not a 500 or a leaked `_id` cast error |
+| Filters | `category`, `source`, `month`, `startDate`/`endDate`, `search` | Each exact; both range ends inclusive; month covering only its own month |
+| Regex safety | Searched `.`, `(large)`, and `(a+)+(a+)+…$` | Escaped: 0 hits, 1 hit, and a 2 ms response |
+| Sorting | All four orders | Correct, with `_id` as tie-break so paging cannot repeat a row |
+| Paging | `limit=2&page=2`, `limit=5000`, an empty result | Right slice, capped at 100, and `pages: 1` for an empty list |
+| Index | `collection.indexes()` **and** `explain()` on the list query | Present, and actually chosen — `IXSCAN`, not a collection scan |
+| **Real browser** | Chrome on `:5173`, the exact body `ExpenseForm.jsx` submits | Create, read, update, list, delete all worked cross-origin |
+
+### Assessment
+
+| Task | Tool | Helped? | What had to be corrected |
+|---|---|---|---|
+| Model, service, routers | Claude Code | Yes | Nothing structural |
+| Query parameter sanitising | Claude Code | **No** | Express 5 exposes `req.query` through a getter, so express-validator's `.toDate()` and `.toInt()` cannot write back and every filter arrived as a raw string. `startDate` crashed outright — but `page` and `limit` *passed*, because `"2" - 1` and `Math.min("5000", 100)` coerce. Two green assertions were green for the wrong reason. Fixed by reading `matchedData(req, { locations: ["query"] })`, which also drops unrecognised parameters. |
+| Filter that does not apply | Claude Code | Partly | `/income?category=food` returned every income record with a 200, because an unvalidated parameter is simply dropped. The test had asserted a 400 that the code never implemented — so the test was wrong, but its expectation was the better behaviour, and the code changed to match rather than the test. |
+| Search field choice | Claude Code | Yes | Read what each page's own search box filters on today and matched it, rather than inventing a field list. |
+
+### Notes for the retrospective
+
+- **A passing test is not evidence that the mechanism works.** The paging
+  assertions passed while the sanitiser they depended on was doing nothing;
+  JavaScript's coercion covered for it. The date filter is the only reason any
+  of it was found, and only because a `Date` method does not exist on a string.
+- Silently ignoring a filter is worse than refusing it. A request that filtered
+  on nothing still answers 200 with a full list, and nothing in the response
+  says the filter was dropped.
+- `Income.jsx` renders `entry.date` directly. The API returns an ISO timestamp,
+  so that field will need formatting during integration; it is not a backend
+  concern but it will look like one.
+
+### Prompts issued
+
+Verbatim, in order.
+
+1. ```
+   gh pr create --base main --head feature/auth-api --title "feat: auth API — register, login, logout and session check" --body "Closes #6"
+    give me 7 ib this format
+   ```
+2. `nooooo base is main`
+3. `https://github.com/amar2512003/Budpense/issues/8 lets solve this issue, ensure you follow all the instructions from the previous issue solution`
