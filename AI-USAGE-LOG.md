@@ -786,9 +786,38 @@ change name and password.
   is now the reference the dashboard endpoint was tested against rather than
   code the app runs.
 
+### Reported afterwards: registration rejecting matching passwords
+
+A user reported the register form answering "Passwords do not match." for two
+passwords that were plainly identical on screen. **Reproduced in the browser:**
+filling the confirmation field *without* firing the events React listens for —
+which is what a password manager or the browser's own autofill does — leaves the
+component's state empty while the box shows the text. The form then compared a
+filled password against an empty string.
+
+Both auth forms now read their values from the form element at submit, so
+anything the browser filled counts. Three further checks were run against the
+live app: a genuine mismatch is still refused, an autofilled confirmation now
+registers, and a confirmation differing only by a trailing space says so —
+"check for a space at the start or end" — rather than leaving the user comparing
+two identical-looking rows of dots.
+
+Every password field also gained a **Show/Hide toggle**, which is the other half
+of the same problem: a masked field gives nobody a way to see a stray space.
+
+| Task | Tool | Helped? | What had to be corrected |
+|---|---|---|---|
+| Diagnosing the report | Claude Code | Yes | The validation logic was correct, so reading it proved nothing. Reproducing the symptom in the browser is what identified autofill as the cause. |
+| Writing the fix | Claude Code | **Partly** | A shell `cd` failed and the `&&` chain silently skipped writing `Input.jsx`, so the first test run reported the toggle missing when the file had never been written. The test was right; the edit had not happened. |
+| The new toggle vs. existing tests | Claude Code | Partly | `aria-label="Show password"` made three existing `getByLabelText(/password/i)` queries ambiguous. Anchored them instead of loosening the label. |
+
 ### Prompts issued
 
 Verbatim, in order.
 
 1. `https://github.com/amar2512003/Budpense/issues/2 create a new branch and solve this one. in this itself run deep audits to ensure everything is working perfectly fine`
 2. `the entire webapp should be ready end to end for use by a real person, write many many unit tests if needed`
+3. `what is the command to run the server`
+4. `cant we combine them so that just running one does the job`
+5. `Budpense ... Passwords do not match. ... even though tyhe passwords are the same in this, it doesnt verify`
+6. `add the option of show password`
