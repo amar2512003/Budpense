@@ -10,6 +10,7 @@ import errorMiddleware from "./middleware/error.middleware.js";
 import notFoundMiddleware from "./middleware/notFound.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import budgetRoutes from "./routes/budget.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 import expenseRoutes from "./routes/expense.routes.js";
 import incomeRoutes from "./routes/income.routes.js";
 import userRoutes from "./routes/user.routes.js";
@@ -45,6 +46,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/income", incomeRoutes);
 app.use("/api/budgets", budgetRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
