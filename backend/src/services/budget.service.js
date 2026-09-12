@@ -4,23 +4,10 @@ import { EXPENSE } from "../constants/enums.js";
 import Budget from "../models/Budget.js";
 import Expense from "../models/Expense.js";
 import ApiError from "../utils/apiError.js";
+import toMoney from "../utils/money.js";
+import monthRange from "../utils/monthRange.js";
 
 const periodKey = ({ year, month, category }) => `${year}-${month}-${category}`;
-
-/**
- * The month as a half-open UTC range. Built from Date.UTC so it cannot drift
- * with the server's timezone, and half-open so an expense dated midnight on the
- * last day of the month falls in this month rather than being counted twice or
- * missed entirely.
- */
-function monthRange(year, month) {
-  return {
-    date: {
-      $gte: new Date(Date.UTC(year, month - 1, 1)),
-      $lt: new Date(Date.UTC(year, month, 1)),
-    },
-  };
-}
 
 /**
  * Totals expense spend per category for every period the given budgets cover,
@@ -34,8 +21,9 @@ async function spendByPeriod(userId, budgets) {
   const periods = [...new Set(budgets.map((budget) => `${budget.year}-${budget.month}`))];
   const ranges = periods.map((period) => {
     const [year, month] = period.split("-").map(Number);
+    const { start, end } = monthRange(year, month);
 
-    return monthRange(year, month);
+    return { date: { $gte: start, $lt: end } };
   });
 
   const totals = await Expense.aggregate([
@@ -62,11 +50,6 @@ async function spendByPeriod(userId, budgets) {
 
   return new Map(totals.map((total) => [periodKey(total._id), total.spent]));
 }
-
-// Summing doubles leaves tails like 0.30000000000000004. Money is reported to
-// two places so the figure is one a person could write down, and so a tail that
-// small cannot decide whether a budget counts as overspent.
-const toMoney = (value) => Math.round(value * 100) / 100;
 
 function toPublicBudget(budget, rawSpent) {
   const spent = toMoney(rawSpent);
