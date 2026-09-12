@@ -1,184 +1,114 @@
 import { create } from "zustand";
 
 import {
-  readStoredValue,
-  removeStoredValue,
-  writeStoredValue,
-} from "../utils/localStorage";
+  changePassword as changePasswordRequest,
+  getCurrentUser,
+  loginUser,
+  logoutUser,
+  registerUser,
+  updateProfile as updateProfileRequest,
+} from "../services/authService";
+import { toErrorMessage } from "../utils/errorMessage";
 
-const ACCOUNTS_STORAGE_KEY = "budpense-accounts";
-const CURRENT_USER_STORAGE_KEY = "budpense-current-user";
+const useAuthStore = create((set) => ({
+  user: null,
+  isAuthenticated: false,
+  // True until the first /auth/me answers. Starting false would let
+  // ProtectedRoute see "not authenticated" on the first render of a hard
+  // refresh and redirect a signed-in user to the login page.
+  isLoading: true,
+  error: null,
 
-const getAccounts = () => {
-  const accounts = readStoredValue(ACCOUNTS_STORAGE_KEY, []);
+  checkAuth: async () => {
+    try {
+      const { data } = await getCurrentUser();
 
-  return Array.isArray(accounts) ? accounts : [];
-};
+      set({ user: data.user, isAuthenticated: true, isLoading: false, error: null });
 
-const getCurrentUser = () =>
-  readStoredValue(CURRENT_USER_STORAGE_KEY, null);
+      return data.user;
+    } catch {
+      // No session is the normal answer here, not an error worth showing.
+      set({ user: null, isAuthenticated: false, isLoading: false, error: null });
 
-const normalizeEmail = (email) => email.trim().toLowerCase();
+      return null;
+    }
+  },
 
-const createAuthError = (message) => {
-  const error = new Error(message);
-  error.response = { data: { message } };
+  login: async (credentials) => {
+    set({ isLoading: true, error: null });
 
-  return error;
-};
+    try {
+      const { data } = await loginUser(credentials);
 
-const useAuthStore = create((set, get) => {
-  const storedUser = getCurrentUser();
+      set({ user: data.user, isAuthenticated: true, isLoading: false, error: null });
 
-  return {
-    user: storedUser,
-    isAuthenticated: Boolean(storedUser),
-    isLoading: false,
-    error: null,
-
-    checkAuth: async () => {
-      const user = getCurrentUser();
-
-      set({
-        user,
-        isAuthenticated: Boolean(user),
-        isLoading: false,
-        error: null,
-      });
-
-      return user;
-    },
-
-    login: async ({ email, password }) => {
-      set({ isLoading: true, error: null });
-
-      const account = getAccounts().find(
-        (entry) => entry.email === normalizeEmail(email)
-      );
-
-      if (!account || account.password !== password) {
-        const error = createAuthError("Incorrect email or password.");
-
-        set({
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-          error: error.message,
-        });
-
-        throw error;
-      }
-
-      const user = { name: account.name, email: account.email };
-
-      writeStoredValue(CURRENT_USER_STORAGE_KEY, user);
-      set({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
-
-      return { user };
-    },
-
-    register: async ({ name, email, password }) => {
-      set({ isLoading: true, error: null });
-
-      const normalizedEmail = normalizeEmail(email);
-      const accounts = getAccounts();
-
-      if (accounts.some((account) => account.email === normalizedEmail)) {
-        const error = createAuthError("An account with this email already exists.");
-
-        set({ isLoading: false, error: error.message });
-
-        throw error;
-      }
-
-      const account = {
-        name: name.trim(),
-        email: normalizedEmail,
-        password,
-      };
-      const user = { name: account.name, email: account.email };
-
-      writeStoredValue(ACCOUNTS_STORAGE_KEY, [...accounts, account]);
-      writeStoredValue(CURRENT_USER_STORAGE_KEY, user);
-      set({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
-
-      return { user };
-    },
-
-    updateProfile: async ({ name, email }) => {
-      const currentUser = get().user;
-
-      if (!currentUser) {
-        throw createAuthError("Please sign in before updating your profile.");
-      }
-
-      const normalizedEmail = normalizeEmail(email);
-      const accounts = getAccounts();
-      const emailTaken = accounts.some(
-        (account) =>
-          account.email === normalizedEmail &&
-          account.email !== currentUser.email
-      );
-
-      if (emailTaken) {
-        throw createAuthError("An account with this email already exists.");
-      }
-
-      const user = { name: name.trim(), email: normalizedEmail };
-      const updatedAccounts = accounts.map((account) =>
-        account.email === currentUser.email
-          ? { ...account, ...user }
-          : account
-      );
-
-      writeStoredValue(ACCOUNTS_STORAGE_KEY, updatedAccounts);
-      writeStoredValue(CURRENT_USER_STORAGE_KEY, user);
-      set({ user, error: null });
-
-      return user;
-    },
-
-    changePassword: async ({ currentPassword, password }) => {
-      const currentUser = get().user;
-      const accounts = getAccounts();
-      const account = accounts.find(
-        (entry) => entry.email === currentUser?.email
-      );
-
-      if (!account || account.password !== currentPassword) {
-        throw createAuthError("Your current password is incorrect.");
-      }
-
-      writeStoredValue(
-        ACCOUNTS_STORAGE_KEY,
-        accounts.map((entry) =>
-          entry.email === account.email ? { ...entry, password } : entry
-        )
-      );
-    },
-
-    logout: async () => {
-      removeStoredValue(CURRENT_USER_STORAGE_KEY);
+      return data.user;
+    } catch (error) {
       set({
         user: null,
         isAuthenticated: false,
         isLoading: false,
-        error: null,
+        error: toErrorMessage(error),
       });
-    },
 
-    clearError: () => set({ error: null }),
-  };
-});
+      throw error;
+    }
+  },
+
+  register: async (details) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const { data } = await registerUser(details);
+
+      set({ user: data.user, isAuthenticated: true, isLoading: false, error: null });
+
+      return data.user;
+    } catch (error) {
+      set({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: toErrorMessage(error),
+      });
+
+      throw error;
+    }
+  },
+
+  logout: async () => {
+    try {
+      await logoutUser();
+    } catch {
+      // Never rethrown: the caller navigates away on the next line, and the
+      // alternative is someone who pressed log out, saw an error, and is still
+      // looking at their own data. The session is cleared locally either way.
+    } finally {
+      set({ user: null, isAuthenticated: false, isLoading: false, error: null });
+    }
+  },
+
+  updateProfile: async (details) => {
+    try {
+      const { data } = await updateProfileRequest(details);
+
+      set({ user: data.user, error: null });
+
+      return data.user;
+    } catch (error) {
+      throw new Error(toErrorMessage(error));
+    }
+  },
+
+  changePassword: async (passwords) => {
+    try {
+      await changePasswordRequest(passwords);
+    } catch (error) {
+      throw new Error(toErrorMessage(error));
+    }
+  },
+
+  clearError: () => set({ error: null }),
+}));
 
 export default useAuthStore;

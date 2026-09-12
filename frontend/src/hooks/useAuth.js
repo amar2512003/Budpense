@@ -1,7 +1,5 @@
 // src/hooks/useAuth.js
 
-import { useEffect } from "react";
-
 import useAuthStore from "../store/authStore";
 
 const useAuth = () => {
@@ -41,10 +39,6 @@ const useAuth = () => {
   const clearError = useAuthStore(
     (state) => state.clearError
   );
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
 
   return {
     user,
