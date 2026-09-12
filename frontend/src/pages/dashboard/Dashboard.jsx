@@ -1,51 +1,26 @@
-import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Card from "../../components/ui/Card";
+import Loader from "../../components/ui/Loader";
+import ExpenseCard from "../../components/expense/ExpenseCard";
 import CategoryChart from "../../components/charts/CategoryChart";
 import ExpenseChart from "../../components/charts/ExpenseChart";
 import IncomeExpenseChart from "../../components/charts/IncomeExpenseChart";
-import ExpenseCard from "../../components/expense/ExpenseCard";
-import useExpenseStore from "../../store/expenseStore";
-import useIncomeStore from "../../store/incomeStore";
-import {
-  categoryTotals,
-  dailyExpenseTotals,
-  entriesForMonth,
-  getCurrentMonthKey,
-  monthlyIncomeExpenseTotals,
-  sortByNewestDate,
-  totalAmount,
-} from "../../utils/finance";
+
+import useDashboard from "../../hooks/useDashboard";
+import { toDailySeries, toMonthlySeries } from "../../utils/chartData";
 import { formatCurrency } from "../../utils/formatCurrency";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const expenses = useExpenseStore((state) => state.expenses);
-  const income = useIncomeStore((state) => state.income);
 
-  const summary = useMemo(() => {
-    const currentMonth = getCurrentMonthKey();
-    const currentMonthIncome = entriesForMonth(income, currentMonth);
-    const currentMonthExpenses = entriesForMonth(expenses, currentMonth);
-    const totalIncome = totalAmount(currentMonthIncome);
-    const totalExpense = totalAmount(currentMonthExpenses);
+  // One request for the whole page: the figures are computed by the API, over
+  // every record on the account rather than the page of expenses in the store.
+  const { summary, loading, error } = useDashboard();
 
-    return {
-      totalIncome,
-      totalExpense,
-      balance: totalIncome - totalExpense,
-      categoryData: categoryTotals(currentMonthExpenses),
-      expenseData: dailyExpenseTotals(currentMonthExpenses),
-      incomeExpenseData: monthlyIncomeExpenseTotals(income, expenses),
-      recentExpenses: sortByNewestDate(expenses).slice(0, 4),
-    };
-  }, [expenses, income]);
-
-  const savingsRate =
-    summary.totalIncome > 0
-      ? Math.round((summary.balance / summary.totalIncome) * 100)
-      : 0;
+  if (loading) {
+    return <Loader />;
+  }
 
   return (
     <div className="space-y-6">
@@ -55,6 +30,12 @@ const Dashboard = () => {
           Here&apos;s an overview of your finances.
         </p>
       </div>
+
+      {error && (
+        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600" role="alert">
+          {error}
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
@@ -84,7 +65,7 @@ const Dashboard = () => {
         <Card>
           <p className="text-sm text-gray-500">Savings Rate</p>
           <p className="mt-2 text-2xl font-bold text-gray-900">
-            {savingsRate}%
+            {summary.savingsRate}%
           </p>
           <p className="mt-1 text-xs text-gray-500">Of your income</p>
         </Card>
@@ -94,7 +75,7 @@ const Dashboard = () => {
         title="Income vs Expenses"
         description="Your financial activity over the last six months."
       >
-        <IncomeExpenseChart data={summary.incomeExpenseData} />
+        <IncomeExpenseChart data={toMonthlySeries(summary.monthlyTrend)} />
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -102,14 +83,14 @@ const Dashboard = () => {
           title="Spending by Category"
           description="Your expense categories for this month."
         >
-          <CategoryChart data={summary.categoryData} />
+          <CategoryChart data={summary.categoryBreakdown} />
         </Card>
 
         <Card
           title="Expense Trend"
           description="Your daily spending this month."
         >
-          <ExpenseChart data={summary.expenseData} />
+          <ExpenseChart data={toDailySeries(summary.dailyExpense)} />
         </Card>
       </div>
 
