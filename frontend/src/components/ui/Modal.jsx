@@ -40,6 +40,9 @@ const Modal = ({
       />
 
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className={`relative z-10 w-full rounded-xl bg-white shadow-xl ${sizes[size]}`}
       >
         <div className="flex items-center justify-between border-b px-5 py-4">
