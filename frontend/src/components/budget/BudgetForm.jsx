@@ -6,6 +6,8 @@ import Input from "../ui/Input";
 import Select from "../ui/Select";
 import Button from "../ui/Button";
 
+import { CATEGORIES } from "../../constants/enums";
+
 const BudgetForm = ({
   initialData = {},
   onSubmit,
@@ -23,40 +25,6 @@ const BudgetForm = ({
 
   const [error, setError] = useState("");
 
-  const categories = [
-    {
-      value: "food",
-      label: "Food",
-    },
-    {
-      value: "transport",
-      label: "Transport",
-    },
-    {
-      value: "shopping",
-      label: "Shopping",
-    },
-    {
-      value: "bills",
-      label: "Bills",
-    },
-    {
-      value: "entertainment",
-      label: "Entertainment",
-    },
-    {
-      value: "health",
-      label: "Health",
-    },
-    {
-      value: "education",
-      label: "Education",
-    },
-    {
-      value: "other",
-      label: "Other",
-    },
-  ];
 
   const months = [
     { value: "01", label: "January" },
@@ -137,7 +105,7 @@ const BudgetForm = ({
         name="category"
         value={formData.category}
         onChange={handleChange}
-        options={categories}
+        options={CATEGORIES}
         placeholder="Select category"
         required
       />

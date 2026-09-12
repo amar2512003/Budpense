@@ -4,6 +4,8 @@ import Input from "../ui/Input";
 import Select from "../ui/Select";
 import Button from "../ui/Button";
 
+import { CATEGORIES, PAYMENT_METHODS } from "../../constants/enums";
+
 const ExpenseForm = ({
   initialData = {},
   onSubmit,
@@ -14,29 +16,14 @@ const ExpenseForm = ({
     title: initialData.title || "",
     amount: initialData.amount || "",
     category: initialData.category || "",
-    date: initialData.date || "",
+    // A date input only accepts YYYY-MM-DD; the API sends a full ISO timestamp.
+    date: (initialData.date || "").slice(0, 10),
     paymentMethod: initialData.paymentMethod || "",
     description: initialData.description || "",
   });
 
   const [error, setError] = useState("");
 
-  const categories = [
-    { value: "food", label: "Food" },
-    { value: "transport", label: "Transport" },
-    { value: "shopping", label: "Shopping" },
-    { value: "bills", label: "Bills" },
-    { value: "entertainment", label: "Entertainment" },
-    { value: "health", label: "Health" },
-    { value: "other", label: "Other" },
-  ];
-
-  const paymentMethods = [
-    { value: "cash", label: "Cash" },
-    { value: "upi", label: "UPI" },
-    { value: "card", label: "Card" },
-    { value: "bank", label: "Bank Transfer" },
-  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -105,7 +92,7 @@ const ExpenseForm = ({
           name="category"
           value={formData.category}
           onChange={handleChange}
-          options={categories}
+          options={CATEGORIES}
           required
         />
 
@@ -124,7 +111,7 @@ const ExpenseForm = ({
         name="paymentMethod"
         value={formData.paymentMethod}
         onChange={handleChange}
-        options={paymentMethods}
+        options={PAYMENT_METHODS}
       />
 
       <div>

@@ -67,7 +67,13 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const errors = validateLogin(formData);
+    // Read from the form, not from state: autofilled credentials would
+    // otherwise submit as empty. See Register for the same reason.
+    const submitted = { ...formData, ...Object.fromEntries(new FormData(e.target)) };
+
+    setFormData(submitted);
+
+    const errors = validateLogin(submitted);
 
     setFormErrors(errors);
 
@@ -76,7 +82,7 @@ const Login = () => {
     }
 
     try {
-      await login(formData);
+      await login(submitted);
 
       navigate(redirectPath, {
         replace: true,

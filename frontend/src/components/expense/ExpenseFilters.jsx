@@ -1,6 +1,8 @@
 import Input from "../ui/Input";
 import Select from "../ui/Select";
 
+import { CATEGORIES, SORT_OPTIONS } from "../../constants/enums";
+
 const ExpenseFilters = ({
   search,
   setSearch,
@@ -9,23 +11,6 @@ const ExpenseFilters = ({
   sort,
   setSort,
 }) => {
-  const categories = [
-    { value: "food", label: "Food" },
-    { value: "transport", label: "Transport" },
-    { value: "shopping", label: "Shopping" },
-    { value: "bills", label: "Bills" },
-    { value: "entertainment", label: "Entertainment" },
-    { value: "health", label: "Health" },
-    { value: "other", label: "Other" },
-  ];
-
-  const sortOptions = [
-    { value: "newest", label: "Newest first" },
-    { value: "oldest", label: "Oldest first" },
-    { value: "highest", label: "Highest amount" },
-    { value: "lowest", label: "Lowest amount" },
-  ];
-
   return (
     <div className="grid gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-3">
       <Input
@@ -39,14 +24,20 @@ const ExpenseFilters = ({
         label="Category"
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        options={categories}
+        options={CATEGORIES}
+        // Select renders its placeholder as the empty option, which is exactly
+        // the "no filter" value the API expects.
+        placeholder="All categories"
       />
 
       <Select
         label="Sort"
         value={sort}
         onChange={(e) => setSort(e.target.value)}
-        options={sortOptions}
+        options={SORT_OPTIONS}
+        // Always has a value; a blank option here would just mean "newest"
+        // again, spelled confusingly.
+        placeholder={null}
       />
     </div>
   );

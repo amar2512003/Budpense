@@ -258,3 +258,30 @@ Budpense follows a modular architecture where:
 ## 📄 License
 
 This project is currently developed as an academic/project application.
+
+## Running it locally
+
+Both halves start with one command from the repository root:
+
+```bash
+npm run setup   # first time only: installs root, backend and frontend
+npm run dev     # API on :5001 and the app on :5173, together
+```
+
+`npm run dev` starts three things: a local MongoDB, the API, and the web app.
+The database needs nothing installed — it downloads a real `mongod` on first run
+(about 77 MB, once) and keeps its data in `backend/.mongo-data`, so records
+survive restarts. If something is already listening on 27017, that database is
+used instead and nothing is started.
+
+The backend still needs `backend/.env`: copy `backend/.env.example` and fill in
+`JWT_SECRET` (`openssl rand -hex 32` makes a good one). Leave `MONGO_URI` as
+`mongodb://127.0.0.1:27017/budpense` to use the local database, or replace it
+with an Atlas connection string — in which case start the API on its own with
+`npm --prefix backend run dev`, since there is no local port to wait for.
+
+The frontend reads `VITE_API_URL` from `frontend/.env`, which defaults to the
+API on port 5001.
+
+`npm test` runs the frontend test suite.
+

@@ -59,8 +59,15 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const errors =
-      validateRegister(formData);
+    // Taken from the form itself rather than from state: a password manager or
+    // the browser's own autofill can fill a box without firing the events React
+    // listens for, and the form would then reject two passwords that plainly
+    // match on screen.
+    const submitted = { ...formData, ...Object.fromEntries(new FormData(e.target)) };
+
+    setFormData(submitted);
+
+    const errors = validateRegister(submitted);
 
     setFormErrors(errors);
 
@@ -69,7 +76,7 @@ const Register = () => {
     }
 
     try {
-      await register(formData);
+      await register(submitted);
 
       navigate("/app/dashboard", {
         replace: true,

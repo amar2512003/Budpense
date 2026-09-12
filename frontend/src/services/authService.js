@@ -89,7 +89,7 @@ export const updateProfile = async (
   userData
 ) => {
   const response = await api.put(
-    "/auth/profile",
+    "/users/me",
     userData
   );
 
@@ -104,7 +104,7 @@ export const changePassword = async (
   passwordData
 ) => {
   const response = await api.put(
-    "/auth/change-password",
+    "/users/change-password",
     passwordData
   );
 

@@ -1,94 +1,141 @@
 import { create } from "zustand";
 
 import {
-  createLocalId,
-  readStoredValue,
-  writeStoredValue,
-} from "../utils/localStorage";
+  createExpense,
+  deleteExpense,
+  getExpenseById,
+  getExpenses,
+  updateExpense,
+} from "../services/expenseService";
+import { toErrorMessage } from "../utils/errorMessage";
 
-const EXPENSES_STORAGE_KEY = "budpense-expenses";
-
-const getStoredExpenses = () => {
-  const expenses = readStoredValue(EXPENSES_STORAGE_KEY, []);
-
-  return Array.isArray(expenses) ? expenses : [];
-};
-
-const saveExpenses = (expenses) => {
-  writeStoredValue(EXPENSES_STORAGE_KEY, expenses);
-};
+// The API caps a page at 100. Filtering and sorting are sent with the request
+// rather than applied here, so a filter searches everything the account holds
+// and not just the page that happens to be loaded.
+export const PAGE_SIZE = 20;
 
 const useExpenseStore = create((set, get) => ({
-  expenses: getStoredExpenses(),
+  expenses: [],
   selectedExpense: null,
+  total: 0,
+  page: 1,
+  pages: 1,
   loading: false,
   error: null,
 
-  fetchExpenses: async () => {
-    const expenses = getStoredExpenses();
+  fetchExpenses: async (params = {}) => {
+    set({ loading: true, error: null });
 
-    set({ expenses, loading: false, error: null });
+    try {
+      const { data } = await getExpenses({ limit: PAGE_SIZE, ...params });
 
-    return expenses;
+      set({
+        expenses: data.items,
+        total: data.total,
+        page: data.page,
+        pages: data.pages,
+        loading: false,
+        error: null,
+      });
+
+      return data.items;
+    } catch (error) {
+      set({ expenses: [], loading: false, error: toErrorMessage(error) });
+
+      return [];
+    }
   },
 
   fetchExpenseById: async (id) => {
-    const expenses = getStoredExpenses();
-    const selectedExpense = expenses.find(
-      (expense) => expense._id === id || expense.id === id
-    );
+    set({ loading: true, error: null, selectedExpense: null });
 
-    set({
-      expenses,
-      selectedExpense: selectedExpense || null,
-      loading: false,
-      error: null,
-    });
+    try {
+      const { data } = await getExpenseById(id);
 
-    return selectedExpense || null;
+      set({ selectedExpense: data.expense, loading: false, error: null });
+
+      return data.expense;
+    } catch (error) {
+      set({ selectedExpense: null, loading: false, error: toErrorMessage(error) });
+
+      return null;
+    }
   },
 
   addExpense: async (expenseData) => {
-    const newExpense = {
-      ...expenseData,
-      _id: createLocalId(),
-    };
-    const expenses = [newExpense, ...get().expenses];
+    set({ loading: true, error: null });
 
-    saveExpenses(expenses);
-    set({ expenses, loading: false, error: null });
+    try {
+      const { data } = await createExpense(expenseData);
 
-    return newExpense;
+      // Put it straight into the list so the page reflects the new record
+      // without a second request.
+      set((state) => ({
+        expenses: [data.expense, ...state.expenses],
+        total: state.total + 1,
+        loading: false,
+        error: null,
+      }));
+
+      return data.expense;
+    } catch (error) {
+      const message = toErrorMessage(error);
+
+      // Not stored as a page-level error: the form that submitted this shows
+      // the thrown message, and setting both renders it twice.
+      set({ loading: false });
+
+      throw new Error(message);
+    }
   },
 
   editExpense: async (id, expenseData) => {
-    const expenses = get().expenses.map((expense) =>
-      expense._id === id || expense.id === id
-        ? { ...expense, ...expenseData, _id: expense._id || id }
-        : expense
-    );
-    const updatedExpense = expenses.find(
-      (expense) => expense._id === id || expense.id === id
-    );
+    set({ loading: true, error: null });
 
-    saveExpenses(expenses);
-    set({
-      expenses,
-      selectedExpense: updatedExpense || null,
-      loading: false,
-      error: null,
-    });
+    try {
+      const { data } = await updateExpense(id, expenseData);
 
-    return updatedExpense || null;
+      set((state) => ({
+        expenses: state.expenses.map((expense) =>
+          expense._id === id ? data.expense : expense,
+        ),
+        selectedExpense: data.expense,
+        loading: false,
+        error: null,
+      }));
+
+      return data.expense;
+    } catch (error) {
+      const message = toErrorMessage(error);
+
+      // Not stored as a page-level error: the form that submitted this shows
+      // the thrown message, and setting both renders it twice.
+      set({ loading: false });
+
+      throw new Error(message);
+    }
   },
 
   removeExpense: async (id) => {
-    const expenses = get().expenses.filter(
-      (expense) => expense._id !== id && expense.id !== id
-    );
+    const previous = get().expenses;
 
-    saveExpenses(expenses);
-    set({ expenses, loading: false, error: null });
+    // Removed from the list first so the row disappears at once; put back if
+    // the request turns out to have failed.
+    set((state) => ({
+      expenses: state.expenses.filter((expense) => expense._id !== id),
+      total: Math.max(0, state.total - 1),
+      error: null,
+    }));
+
+    try {
+      await deleteExpense(id);
+    } catch (error) {
+      const message = toErrorMessage(error);
+
+      set({ expenses: previous, total: previous.length, error: message });
+
+      throw new Error(message);
+    }
   },
 
   clearError: () => set({ error: null }),

@@ -34,7 +34,9 @@ const Select = ({
           ${error ? "border-red-500" : ""}
           ${className}`}
       >
-        <option value="">{placeholder}</option>
+        {/* Omitted when the field always has a value, so a sort or filter
+            cannot be set back to a meaningless blank choice. */}
+        {placeholder !== null && <option value="">{placeholder}</option>}
 
         {options.map((option) => (
           <option key={option.value} value={option.value}>

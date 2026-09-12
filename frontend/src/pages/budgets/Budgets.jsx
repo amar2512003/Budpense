@@ -1,6 +1,6 @@
 // src/pages/budgets/Budgets.jsx
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
@@ -11,16 +11,10 @@ import BudgetCard from "../../components/budget/BudgetCard";
 import BudgetForm from "../../components/budget/BudgetForm";
 
 import useBudgetStore from "../../store/budgetStore";
-import useExpenseStore from "../../store/expenseStore";
-import { entriesForMonth, totalAmount } from "../../utils/finance";
 
 const Budgets = () => {
   const budgets = useBudgetStore(
     (state) => state.budgets
-  );
-
-  const expenses = useExpenseStore(
-    (state) => state.expenses
   );
 
   const loading = useBudgetStore(
@@ -53,26 +47,6 @@ const Budgets = () => {
   const [editingBudget, setEditingBudget] =
     useState(null);
 
-  const budgetsWithSpending = useMemo(
-    () =>
-      budgets.map((budget) => {
-        const month = String(budget.month || "").padStart(2, "0");
-        const monthKey = `${budget.year}-${month}`;
-        const categoryExpenses = entriesForMonth(
-          expenses,
-          monthKey
-        ).filter(
-          (expense) => expense.category === budget.category
-        );
-
-        return {
-          ...budget,
-          spent: totalAmount(categoryExpenses),
-        };
-      }),
-    [budgets, expenses]
-  );
-
   useEffect(() => {
     fetchBudgets();
   }, [fetchBudgets]);
@@ -101,22 +75,17 @@ const Budgets = () => {
     }
   };
 
+  // A failure here propagates to BudgetForm, which shows it inside the modal
+  // the user is still looking at, and the modal stays open.
   const handleSubmit = async (data) => {
-    try {
-      if (editingBudget) {
-        await editBudget(
-          editingBudget._id,
-          data
-        );
-      } else {
-        await addBudget(data);
-      }
-
-      setIsModalOpen(false);
-      setEditingBudget(null);
-    } catch {
-      // Store handles the error.
+    if (editingBudget) {
+      await editBudget(editingBudget._id, data);
+    } else {
+      await addBudget(data);
     }
+
+    setIsModalOpen(false);
+    setEditingBudget(null);
   };
 
   return (
@@ -151,9 +120,9 @@ const Budgets = () => {
         title="Your Budgets"
         description="Monitor your spending against your limits."
       >
-        {loading && !budgetsWithSpending.length ? (
+        {loading && !budgets.length ? (
           <Loader />
-        ) : budgetsWithSpending.length === 0 ? (
+        ) : budgets.length === 0 ? (
           <div className="py-12 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-xl">
               ₹
@@ -176,7 +145,7 @@ const Budgets = () => {
           </div>
         ) : (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {budgetsWithSpending.map((budget) => (
+            {budgets.map((budget) => (
               <BudgetCard
                 key={
                   budget._id || budget.id

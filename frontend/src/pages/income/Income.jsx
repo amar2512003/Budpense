@@ -1,13 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import Modal from "../../components/ui/Modal";
+import Loader from "../../components/ui/Loader";
 import useIncomeStore from "../../store/incomeStore";
 import { formatCurrency } from "../../utils/formatCurrency";
+import { formatDate } from "../../utils/formatDate";
 import { sortByNewestDate, totalAmount } from "../../utils/finance";
+import { INCOME_SOURCES } from "../../constants/enums";
 
 const emptyForm = {
   source: "",
@@ -16,20 +19,15 @@ const emptyForm = {
   description: "",
 };
 
-const sourceOptions = [
-  { value: "salary", label: "Salary" },
-  { value: "freelancing", label: "Freelancing" },
-  { value: "business", label: "Business" },
-  { value: "investment", label: "Investment" },
-  { value: "other", label: "Other" },
-];
 
 const labelForSource = (source) =>
-  sourceOptions.find((option) => option.value === source)?.label || source;
+  INCOME_SOURCES.find((option) => option.value === source)?.label || source;
 
 const Income = () => {
   const income = useIncomeStore((state) => state.income);
   const loading = useIncomeStore((state) => state.loading);
+  const storeError = useIncomeStore((state) => state.error);
+  const fetchIncome = useIncomeStore((state) => state.fetchIncome);
   const addIncome = useIncomeStore((state) => state.addIncome);
   const editIncome = useIncomeStore((state) => state.editIncome);
   const removeIncome = useIncomeStore((state) => state.removeIncome);
@@ -40,6 +38,10 @@ const Income = () => {
   const [formData, setFormData] = useState(emptyForm);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    fetchIncome();
+  }, [fetchIncome]);
+
   const openForm = (entry = null) => {
     setEditingIncome(entry);
     setFormData(
@@ -47,7 +49,8 @@ const Income = () => {
         ? {
             source: entry.source || "",
             amount: entry.amount || "",
-            date: entry.date || "",
+            // A date input only accepts YYYY-MM-DD.
+            date: (entry.date || "").slice(0, 10),
             description: entry.description || "",
           }
         : emptyForm
@@ -90,13 +93,17 @@ const Income = () => {
 
     const incomeData = { ...formData, amount: Number(formData.amount) };
 
-    if (editingIncome) {
-      await editIncome(editingIncome._id || editingIncome.id, incomeData);
-    } else {
-      await addIncome(incomeData);
-    }
+    try {
+      if (editingIncome) {
+        await editIncome(editingIncome._id, incomeData);
+      } else {
+        await addIncome(incomeData);
+      }
 
-    closeForm();
+      closeForm();
+    } catch (submitError) {
+      setError(submitError.message);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -104,7 +111,11 @@ const Income = () => {
       return;
     }
 
-    await removeIncome(id);
+    try {
+      await removeIncome(id);
+    } catch {
+      // The store has restored the row and holds the message.
+    }
   };
 
   const filteredIncome = useMemo(() => {
@@ -159,8 +170,16 @@ const Income = () => {
         onChange={(event) => setSearch(event.target.value)}
       />
 
+      {storeError && (
+        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600" role="alert">
+          {storeError}
+        </div>
+      )}
+
       <Card title="Income History" description="Your recorded income transactions.">
-        {filteredIncome.length === 0 ? (
+        {loading ? (
+          <Loader />
+        ) : filteredIncome.length === 0 ? (
           <div className="py-10 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
               ₹
@@ -188,7 +207,7 @@ const Income = () => {
                       {labelForSource(entry.source)}
                     </p>
                     <p className="truncate text-xs text-gray-500">
-                      {entry.date}
+                      {formatDate(entry.date)}
                       {entry.description && ` • ${entry.description}`}
                     </p>
                   </div>
@@ -236,7 +255,7 @@ const Income = () => {
             name="source"
             value={formData.source}
             onChange={handleChange}
-            options={sourceOptions}
+            options={INCOME_SOURCES}
             placeholder="Select source"
             required
           />

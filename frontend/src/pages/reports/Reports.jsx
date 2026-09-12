@@ -1,38 +1,31 @@
-import { useMemo } from "react";
-
 import Card from "../../components/ui/Card";
+import Loader from "../../components/ui/Loader";
 import CategoryChart from "../../components/charts/CategoryChart";
 import ExpenseChart from "../../components/charts/ExpenseChart";
 import IncomeExpenseChart from "../../components/charts/IncomeExpenseChart";
-import useExpenseStore from "../../store/expenseStore";
-import useIncomeStore from "../../store/incomeStore";
-import {
-  categoryTotals,
-  dailyExpenseTotals,
-  monthlyIncomeExpenseTotals,
-  totalAmount,
-} from "../../utils/finance";
+
+import useDashboard from "../../hooks/useDashboard";
+import { toDailySeries, toMonthlySeries } from "../../utils/chartData";
 import { formatCurrency } from "../../utils/formatCurrency";
 
 const Reports = () => {
-  const expenses = useExpenseStore((state) => state.expenses);
-  const income = useIncomeStore((state) => state.income);
+  // The same endpoint as the dashboard, as the backend plan intends: the
+  // figures a report shows are the figures the dashboard shows.
+  const { summary, loading, error } = useDashboard();
 
-  const report = useMemo(() => {
-    const totalIncome = totalAmount(income);
-    const totalExpense = totalAmount(expenses);
-    const categoryData = categoryTotals(expenses);
+  const report = {
+    totalIncome: summary.totalIncome,
+    totalExpense: summary.totalExpense,
+    savings: summary.balance,
+    categoryData: summary.categoryBreakdown,
+    expenseData: toDailySeries(summary.dailyExpense),
+    incomeExpenseData: toMonthlySeries(summary.monthlyTrend),
+    highestCategory: summary.categoryBreakdown[0] || null,
+  };
 
-    return {
-      totalIncome,
-      totalExpense,
-      savings: totalIncome - totalExpense,
-      categoryData,
-      expenseData: dailyExpenseTotals(expenses),
-      incomeExpenseData: monthlyIncomeExpenseTotals(income, expenses),
-      highestCategory: categoryData[0] || null,
-    };
-  }, [expenses, income]);
+  if (loading) {
+    return <Loader />;
+  }
 
   return (
     <div className="space-y-6">
@@ -42,6 +35,12 @@ const Reports = () => {
           Analyze your income, expenses and spending habits.
         </p>
       </div>
+
+      {error && (
+        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600" role="alert">
+          {error}
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
