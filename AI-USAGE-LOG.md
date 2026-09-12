@@ -434,3 +434,114 @@ Verbatim, in order.
    ```
 2. `nooooo base is main`
 3. `https://github.com/amar2512003/Budpense/issues/8 lets solve this issue, ensure you follow all the instructions from the previous issue solution`
+
+---
+
+## Session — 12 September 2026
+
+### Objective
+
+Implement issue #9 — the budget API with computed spend — on `main`, which now
+carries #6, #7 and #8.
+
+### Work produced
+
+Branch `feature/budget-api`, derived from `main`.
+
+- **`models/Budget.js`** — category from the shared enum, amount above zero,
+  month 1–12 stored as a Number, year 2020–2100, and the compound unique index
+  on `{ user, category, month, year }`.
+- **`services/budget.service.js`** — CRUD plus the spend join. `spent` is
+  computed on read, never stored (decision 5): a stored column would need
+  correcting on every expense create, update, delete and category change, and a
+  figure that drifts is wrong silently. The whole list costs **one** aggregation
+  over the expenses, grouped by year, month and category, whatever the budget
+  count.
+- **`controllers/budget.controller.js`**, **`routes/budget.routes.js`**,
+  **`validators/budget.js`** — the five routes behind one `router.use(protect)`.
+- `inList()` moved from `validators/expense.js` into `validators/fields.js`, so
+  the budget validator phrases its category choices identically.
+
+Decision 4 resolved as proposed: `month` is stored as a Number, accepted as
+either `9` or `"09"`, and returned zero-padded.
+
+### Verification performed
+
+37 assertions against a real `mongod`, plus #6's 48, #7's 45 and #8's 55 re-run
+after the validator move. All green, and the full cycle driven from a browser.
+
+| Check | Method | Result |
+|---|---|---|
+| Month in, month out | Posted `"09"` and `9` | Both stored as `9`, both returned as `"09"` |
+| Duplicate | Same category and month twice; then a write straight to the collection | 409 from the service, `11000` from the index — the index is what actually enforces it |
+| Not a duplicate | Same category in another month, another year, another user | All accepted |
+| The join | Seeded spend inside, on both boundaries, outside, in another category, another user and as income | 6500 — only this user's expenses, in this category, in this month |
+| Boundary | An expense at `23:59:59.999` on 30 September and one at `00:00` on 1 October | First counted, second not; the half-open UTC range holds |
+| Unclamped | Lowered a budget below its spend | `percentage: 155.54`, `remaining: -2777`, `isOverBudget: true` |
+| Not stored | Read the raw document | No `spent` field on it |
+| One aggregation | Counted driver commands during `GET /budgets` with five budgets over three periods | `find, find, aggregate` — the session's user, the budgets, one pass over the expenses |
+| Ownership | Read, updated and deleted another user's budget | 404 each time, record intact |
+| Moving a budget | `PUT` onto another budget's slot, then onto its own | 409, then 200 — a budget is not its own duplicate |
+| **Real browser** | Chrome on `:5173`, the exact body `BudgetForm.jsx` submits | `{ spent: 6500, remaining: 1500, percentage: 81.25 }` — the plan's documented example, reproduced |
+
+### Assessment
+
+| Task | Tool | Helped? | What had to be corrected |
+|---|---|---|---|
+| The aggregation | Claude Code | Yes | Casting the owner to `ObjectId` was handled deliberately — `aggregate` does no casting of its own, and a string would have matched nothing and reported every budget as unspent. |
+| Branch base | Claude Code | **No** | Started the branch off `feature/expense-income-api` out of habit from #7 and #8. The instruction was `main`, and by then `main` had both PRs merged, so the dependency argument no longer held. Rebuilt off `main` before going further. |
+| Counting the queries | Claude Code | **No, first attempt** | The "one aggregation" assertion listened for `commandStarted` on a client that was not monitoring commands, so it recorded nothing and failed while the code was correct. Re-run with `monitorCommands: true`, which then also showed the two finds — a claim the first version could not have made either way. |
+| Reading the plan's example | Claude Code | Yes | The documented `81.25` was used as a fixture rather than a description, so the response either matches the plan exactly or the test fails. |
+
+### Notes for the retrospective
+
+- A test that observes nothing fails the same way as a test that observes a
+  bug. This one failed while the feature worked; the previous session had one
+  that passed while the feature was broken. Both were instrumentation, and
+  neither was visible without asking what the assertion actually watched.
+- `BudgetForm.jsx` offers eight categories and still omits `travel`, which the
+  shared enum has. A budget can be created for it through the API but not
+  through the form. That is the frontend half of decision 3, and it belongs to
+  the integration issue.
+
+### Audit of #9 after the fact
+
+Run against the committed branch, through `server.js` itself rather than an
+in-process import, on a server clock set to `Asia/Kolkata` (UTC+5:30) — every
+month boundary in this feature is UTC, and a local-time range would have moved
+both boundary expenses into the wrong month.
+
+18 further assertions, covering what the build-time suite had not:
+
+| Check | Result |
+|---|---|
+| Real boot path | `MongoDB connected` then `API listening`, and the running server built the unique index itself |
+| Month boundaries on a UTC+5:30 clock | 30 Sep `23:59:59.999Z` counted, 1 Oct `00:00Z` not — unchanged by the server's timezone |
+| Spend is recomputed, not cached | Adding, deleting and recategorising an expense each moved the figure with no write to the budget |
+| A budget moved to another month | Reports that month's spend, not the one it was created in |
+| **Five simultaneous identical creates** | 1 × 201, 4 × 409, one row — the index wins the race the service check cannot |
+| Arithmetic | A third of a budget reads 33.33 |
+| Inputs not previously tried | Unpadded `"7"`, an amount as a string, `spent`/`user`/`_id` in the body, an operator object as month — all handled |
+| 19 budgets over 16 periods | Still `find, aggregate`: one pass over the expenses |
+| Error contract | 404, 400, 409, 401 all in the documented shape |
+
+**One defect found and fixed:** `spent` was returned straight from the
+aggregation, so summing fractional amounts shipped `0.30000000000000004` as a
+currency figure, and `remaining` inherited the tail. Both are now rounded to two
+places, which also stops a tail of that size deciding `isOverBudget`. The four
+suites — 48, 45, 55 and 37 assertions — were re-run against the fix.
+
+The audit's own query-count probe failed first, watching a client that was not
+monitoring commands. That is the third instrumentation fault in three sessions
+and the second of exactly this kind; the first version of this check in #9 made
+the same mistake.
+
+### Prompts issued
+
+Verbatim, in order.
+
+1. `https://github.com/amar2512003/Budpense/issues/9 lets solve this the same way now`
+2. `first create a new branch off of main branch and then solve the issue. dont take the long way dont make ai slop code changes`
+3. `the open prs have been merged.. now create a new branch off of main and solve this issue thorougly`
+4. `run an audit to ensure everythings is working properly`
+5. `run an audit to ensure everythings is working properly, stick to this issue`
