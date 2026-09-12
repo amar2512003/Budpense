@@ -1,60 +1,116 @@
 import { create } from "zustand";
 
 import {
-  createLocalId,
-  readStoredValue,
-  writeStoredValue,
-} from "../utils/localStorage";
+  createIncome,
+  deleteIncome,
+  getIncome,
+  updateIncome,
+} from "../services/incomeService";
+import { toErrorMessage } from "../utils/errorMessage";
 
-const INCOME_STORAGE_KEY = "budpense-income";
-
-const getStoredIncome = () => {
-  const income = readStoredValue(INCOME_STORAGE_KEY, []);
-
-  return Array.isArray(income) ? income : [];
-};
-
-const saveIncome = (income) => {
-  writeStoredValue(INCOME_STORAGE_KEY, income);
-};
+export const PAGE_SIZE = 20;
 
 const useIncomeStore = create((set, get) => ({
-  income: getStoredIncome(),
+  income: [],
+  total: 0,
+  page: 1,
+  pages: 1,
   loading: false,
   error: null,
 
+  fetchIncome: async (params = {}) => {
+    set({ loading: true, error: null });
+
+    try {
+      const { data } = await getIncome({ limit: PAGE_SIZE, ...params });
+
+      set({
+        income: data.items,
+        total: data.total,
+        page: data.page,
+        pages: data.pages,
+        loading: false,
+        error: null,
+      });
+
+      return data.items;
+    } catch (error) {
+      set({ income: [], loading: false, error: toErrorMessage(error) });
+
+      return [];
+    }
+  },
+
   addIncome: async (incomeData) => {
-    const newIncome = {
-      ...incomeData,
-      _id: createLocalId(),
-    };
-    const income = [newIncome, ...get().income];
+    set({ loading: true, error: null });
 
-    saveIncome(income);
-    set({ income, loading: false, error: null });
+    try {
+      const { data } = await createIncome(incomeData);
 
-    return newIncome;
+      set((state) => ({
+        income: [data.income, ...state.income],
+        total: state.total + 1,
+        loading: false,
+        error: null,
+      }));
+
+      return data.income;
+    } catch (error) {
+      const message = toErrorMessage(error);
+
+      // Not stored as a page-level error: the form that submitted this shows
+      // the thrown message, and setting both renders it twice.
+      set({ loading: false });
+
+      throw new Error(message);
+    }
   },
 
   editIncome: async (id, incomeData) => {
-    const income = get().income.map((entry) =>
-      entry._id === id || entry.id === id
-        ? { ...entry, ...incomeData, _id: entry._id || id }
-        : entry
-    );
+    set({ loading: true, error: null });
 
-    saveIncome(income);
-    set({ income, loading: false, error: null });
+    try {
+      const { data } = await updateIncome(id, incomeData);
+
+      set((state) => ({
+        income: state.income.map((entry) => (entry._id === id ? data.income : entry)),
+        loading: false,
+        error: null,
+      }));
+
+      return data.income;
+    } catch (error) {
+      const message = toErrorMessage(error);
+
+      // Not stored as a page-level error: the form that submitted this shows
+      // the thrown message, and setting both renders it twice.
+      set({ loading: false });
+
+      throw new Error(message);
+    }
   },
 
   removeIncome: async (id) => {
-    const income = get().income.filter(
-      (entry) => entry._id !== id && entry.id !== id
-    );
+    const previous = get().income;
 
-    saveIncome(income);
-    set({ income, loading: false, error: null });
+    set((state) => ({
+      income: state.income.filter((entry) => entry._id !== id),
+      total: Math.max(0, state.total - 1),
+      error: null,
+    }));
+
+    try {
+      await deleteIncome(id);
+    } catch (error) {
+      const message = toErrorMessage(error);
+
+      set({ income: previous, total: previous.length, error: message });
+
+      throw new Error(message);
+    }
   },
+
+  clearError: () => set({ error: null }),
 }));
 
 export default useIncomeStore;
