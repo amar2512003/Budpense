@@ -704,3 +704,91 @@ Verbatim, in order.
 2. `no delete` (the deferred deployment section, removed from #11)
 3. `now solve this issue following same instructions as before`
 4. `we dont need cookies, this is just a class project`
+
+---
+
+## Session — 12 September 2026 (fourth)
+
+### Objective
+
+Implement issue #2 — integrate the expense frontend with the backend API — and,
+as the session widened, make the whole app usable end to end by a real person,
+with tests.
+
+### Work produced
+
+Branch `feature/expense-integration`, derived from `main`.
+
+- **Every store now calls the API.** `authStore`, `expenseStore`, `incomeStore`
+  and `budgetStore` were reading and writing `localStorage`; they now go through
+  their services, hold `loading`/`error`, and return what the server stored
+  rather than the object the form submitted.
+- **`services/api.js`** — the base URL corrected from port 5000 to 5001, and a
+  401 interceptor that sends an expired session to the login form while leaving
+  credential checks alone.
+- **`hooks/useDashboard.js`** + `dashboardService` — Dashboard and Reports read
+  the single `/api/dashboard` endpoint instead of assembling figures from the
+  stores; `utils/chartData.js` turns its ISO dates into axis labels.
+- **`constants/enums.js`** — one list of categories, payment methods, sources
+  and sort orders for the whole frontend. Three components had their own copies
+  and had drifted: `education` and `travel` existed in the API and in
+  `BudgetForm` but not in `ExpenseForm`, so a travel budget could never fill.
+- **Expenses list** filters, sorts and pages **through the API** (debounced
+  search), so a filter covers the whole account rather than the page in hand.
+- **A logout control**, which the app did not have anywhere.
+- `localStorage.js` and `useExpenses.js` deleted; nothing imports them.
+- **159 tests** under `vitest` + Testing Library: stores, services, the API
+  client, utilities, forms, pages, and the route guards.
+
+### Verification performed
+
+159 unit and component tests, a production build, and the whole app driven in
+Chrome against the real API and a real database: register → add an expense →
+see it on the dashboard, in the budget's computed spend, and in the charts →
+edit it → search and filter → delete → add income → create a budget → log out →
+be refused a protected page → log back in → find everything still there →
+change name and password.
+
+| Check | Result |
+|---|---|
+| Register through the form | 201, session cookie set, dashboard shows the new account at zero, savings rate `0%` rather than `NaN%` |
+| Add / edit / delete an expense | Each round-trips to Mongo; the list, dashboard and budget spend all follow |
+| Search and category filter | Sent to the API; a non-matching search empties the list, a matching one restores it |
+| Income | Fetched on arrival for the first time, created, listed with a formatted date |
+| Budget | `₹2,450 spent of ₹8,000 · 31%`, computed by the API, and back to `₹0` once that expense was deleted |
+| Dashboard and Reports | One request each, six-month axis with empty months present, category donut, daily trend, recent expenses |
+| Log out, then a protected URL | Redirected to the login form |
+| Log back in | Every record still there — the data is in the database, not the browser |
+| Wrong password, taken email, wrong current password | The backend's own sentence, shown on the form the user is looking at |
+
+### Assessment
+
+| Task | Tool | Helped? | What had to be corrected |
+|---|---|---|---|
+| Wiring the stores | Claude Code | Yes | Straightforward once the services' envelope shape was read rather than assumed. |
+| **401 interceptor** | Claude Code | **No** | It treated every 401 as an expired session — so mistyping your *current* password on the change-password form logged you out instead of showing the error. Found by doing it in the browser, not by reading the code. Credential endpoints are now exempt, and eight tests pin the rule. |
+| **PublicRoute deadlock** | Claude Code | **No** | `PublicRoute` waits on `isLoading`, but nothing called `checkAuth` on that branch: landing directly on `/login` would have spun forever. The session check now runs once in `App`, which also stopped every page re-requesting `/auth/me`. Found by a route test that would not settle. |
+| Missing logout | Claude Code | Yes | The store had a `logout` action and the UI had no control for it; a real person could sign in and never sign out. |
+| Duplicated error banners | Claude Code | Partly | A rejected form showed its message twice — once in the modal, once in the page banner behind it. Submission errors now belong to the form; fetch and delete errors stay with the page. |
+| Driving the browser | Claude Code | **No, repeatedly** | Three separate "bugs" were stale element references and one was a missing pause before submitting: the app was right each time. Every one was re-checked against the server log before being believed. |
+
+### Notes for the retrospective
+
+- Both real bugs this session were in the seams — an interceptor policy and a
+  guard that waits for something nobody starts. Neither is visible in a unit
+  test of either side alone, and neither would have been found by reading the
+  diff.
+- The audit kept accusing the app of faults that were my own automation's. The
+  discipline that saved it was checking the API log after every failure: no
+  request logged meant the click never landed, not that the feature was broken.
+- `finance.js` survives for the Income page's local sorting and totals. The rest
+  of it — `categoryTotals`, `dailyExpenseTotals`, `monthlyIncomeExpenseTotals` —
+  is now the reference the dashboard endpoint was tested against rather than
+  code the app runs.
+
+### Prompts issued
+
+Verbatim, in order.
+
+1. `https://github.com/amar2512003/Budpense/issues/2 create a new branch and solve this one. in this itself run deep audits to ensure everything is working perfectly fine`
+2. `the entire webapp should be ready end to end for use by a real person, write many many unit tests if needed`
