@@ -16,6 +16,7 @@ import PublicRoute from "./PublicRoute";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import ForgotPassword from "../pages/auth/ForgotPassword";
+import VerifyOtp from "../pages/auth/VerifyOtp";
 import ResetPassword from "../pages/auth/ResetPassword";
 
 // App
@@ -57,7 +58,12 @@ const AppRoutes = () => {
           />
 
           <Route
-            path="/reset-password/:token"
+            path="/verify-otp"
+            element={<VerifyOtp />}
+          />
+
+          <Route
+            path="/reset-password"
             element={<ResetPassword />}
           />
 

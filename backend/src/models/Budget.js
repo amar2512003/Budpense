@@ -36,6 +36,13 @@ const budgetSchema = new mongoose.Schema(
       min: [2020, "Year must be between 2020 and 2100"],
       max: [2100, "Year must be between 2020 and 2100"],
     },
+    // When true, whatever was left unspent in the previous month's budget for
+    // this same category is added to this one's allowance. Off by default so
+    // existing budgets keep behaving exactly as they did before this existed.
+    rollover: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

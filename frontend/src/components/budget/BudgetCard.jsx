@@ -9,21 +9,34 @@ const BudgetCard = ({
 }) => {
   const amount = Number(budget.amount) || 0;
   const spent = Number(budget.spent) || 0;
+  const rolloverAmount = Number(budget.rolloverAmount) || 0;
+  // Falls back to amount for a budget from before rollover existed, or one
+  // the API hasn't attached it to.
+  const totalAvailable =
+    budget.totalAvailable !== undefined
+      ? Number(budget.totalAvailable) || 0
+      : amount;
 
   const percentage =
-    amount > 0
-      ? Math.min((spent / amount) * 100, 100)
+    totalAvailable > 0
+      ? Math.min((spent / totalAvailable) * 100, 100)
       : 0;
 
-  const isOverBudget = spent > amount;
+  const isOverBudget = spent > totalAvailable;
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="font-semibold text-gray-900">
+          <h3 className="flex items-center gap-2 font-semibold text-gray-900">
             {budget.category || "Budget"}
+
+            {budget.rollover && (
+              <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600">
+                Rollover
+              </span>
+            )}
           </h3>
 
           <p className="mt-1 text-xs text-gray-500">
@@ -56,7 +69,13 @@ const BudgetCard = ({
           </p>
 
           <p className="mt-1 text-xs text-gray-500">
-            spent of {formatCurrency(amount)}
+            spent of {formatCurrency(totalAvailable)}
+            {rolloverAmount > 0 && (
+              <span className="text-gray-400">
+                {" "}
+                (incl. {formatCurrency(rolloverAmount)} rolled over)
+              </span>
+            )}
           </p>
         </div>
 
@@ -68,7 +87,7 @@ const BudgetCard = ({
           }`}
         >
           {Math.round(
-            amount > 0 ? (spent / amount) * 100 : 0
+            totalAvailable > 0 ? (spent / totalAvailable) * 100 : 0
           )}
           %
         </span>
@@ -102,7 +121,7 @@ const BudgetCard = ({
           }`}
         >
           {formatCurrency(
-            Math.abs(amount - spent)
+            Math.abs(totalAvailable - spent)
           )}
         </span>
       </div>

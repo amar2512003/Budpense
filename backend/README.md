@@ -6,7 +6,7 @@ contract live in [`plan/backend-plan.md`](../plan/backend-plan.md).
 ## Running it
 
 ```bash
-cp .env.example .env   # then fill in MONGO_URI and JWT_SECRET
+cp .env.example .env   # then fill in MONGO_URI, JWT_SECRET, EMAIL_USER and EMAIL_PASS
 npm install
 npm run dev            # or npm start
 ```
@@ -23,6 +23,9 @@ request that needs the value.
 | `JWT_SECRET` | Signs the session cookie |
 | `JWT_EXPIRES_IN` | `7d`, matching the cookie's `maxAge` |
 | `CLIENT_URL` | Exact frontend origin — CORS cannot use a wildcard with credentials |
+| `EMAIL_USER` | Gmail address the reset OTP is sent from |
+| `EMAIL_PASS` | A Gmail **App Password** for that address, not its login password |
+| `EMAIL_FROM` | Optional; defaults to `EMAIL_USER` |
 
 `.env` is never committed; `.env.example` is the template.
 
@@ -37,8 +40,9 @@ route needs the cookie.
 | POST | `/auth/login` | Start a session |
 | POST | `/auth/logout` | Clear the session cookie |
 | GET | `/auth/me` | Is this session still valid |
-| POST | `/auth/forgot-password` | Issue a reset link (see below) |
-| POST | `/auth/reset-password/:token` | Consume a reset link |
+| POST | `/auth/forgot-password` | Email a 6-digit reset OTP (see below) |
+| POST | `/auth/verify-otp` | Check the OTP, trade it for a reset session |
+| POST | `/auth/reset-password` | Set a new password with that reset session |
 | GET | `/users/me` | The signed-in user's profile |
 | PUT | `/users/me` | Update name and email |
 | PUT | `/users/change-password` | Change password, current one required |
@@ -66,21 +70,23 @@ route needs the cookie.
 { "success": false, "message": "Validation failed", "errors": { "amount": "Must be greater than 0" } }
 ```
 
-## Password reset has no mail service
+## Password reset is a three-step OTP flow
 
-**There is no mail service in this project.** `POST /api/auth/forgot-password`
-prints the reset link to the *server console* instead of sending it:
+1. `POST /api/auth/forgot-password { email }` — if the address is registered,
+   a 6-digit code is emailed to it via Gmail (Nodemailer), valid for 10
+   minutes. The endpoint answers `200` either way, so the response itself
+   never says whether the address exists.
+2. `POST /api/auth/verify-otp { email, otp }` — checks the code. A wrong
+   guess costs one of 5 attempts; the fifth wrong guess kills the code the
+   same as letting it expire would. A correct one consumes the OTP and
+   returns `{ resetToken }`, a second, separate token good for 10 more minutes.
+3. `POST /api/auth/reset-password { email, resetToken, password,
+   confirmPassword }` — sets the new password. No cookie is issued; the
+   client sends the user to `/login` afterwards.
 
-```text
-Password reset link for someone@example.com: http://localhost:5173/reset-password/<token>
-```
-
-Copy that URL out of the terminal running the API to complete a reset. The
-endpoint answers `200` whether or not the address is registered, so the response
-itself never says which — the console is the only place the link appears.
-
-Tokens are stored hashed with a 15-minute expiry and are cleared on use, so a
-link works once and only within that window.
+Both the OTP and the reset token are stored hashed, never in plaintext, and
+each is cleared the moment it's used — a code or a reset session works once,
+within its own window, and never again after that.
 
 ## Security notes
 

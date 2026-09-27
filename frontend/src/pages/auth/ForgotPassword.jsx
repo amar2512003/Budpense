@@ -1,28 +1,27 @@
 // src/pages/auth/ForgotPassword.jsx
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 
-import useAuthStore from "../../store/authStore";
 import { isValidEmail } from "../../utils/validators";
 
 import { forgotPassword } from "../../services/authService";
 
 const ForgotPassword = () => {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     setError("");
-    setSuccess("");
 
     if (!isValidEmail(email)) {
       setError(
@@ -36,11 +35,10 @@ const ForgotPassword = () => {
     try {
       await forgotPassword(email);
 
-      setSuccess(
-        "If an account exists with this email, a password reset link has been sent."
-      );
-
-      setEmail("");
+      // The API answers the same way whether or not the address is
+      // registered, so we move on to the OTP step regardless — there is
+      // nothing more specific to tell the user here.
+      navigate("/verify-otp", { state: { email } });
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -60,19 +58,13 @@ const ForgotPassword = () => {
 
         <p className="mt-1 text-sm text-gray-500">
           Enter your email and we'll send you a
-          password reset link.
+          6-digit code to reset your password.
         </p>
       </div>
 
       {error && (
         <div className="mb-5 rounded-lg bg-red-50 p-3 text-sm text-red-600">
           {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="mb-5 rounded-lg bg-green-50 p-3 text-sm text-green-600">
-          {success}
         </div>
       )}
 
@@ -97,7 +89,7 @@ const ForgotPassword = () => {
           className="w-full"
           loading={loading}
         >
-          Send Reset Link
+          Send Reset Code
         </Button>
       </form>
 

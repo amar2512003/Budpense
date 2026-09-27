@@ -21,6 +21,7 @@ const BudgetForm = ({
     year:
       initialData.year ||
       new Date().getFullYear(),
+    rollover: initialData.rollover || false,
   });
 
   const [error, setError] = useState("");
@@ -47,6 +48,13 @@ const BudgetForm = ({
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleRolloverChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      rollover: e.target.checked,
     }));
   };
 
@@ -144,6 +152,27 @@ const BudgetForm = ({
           required
         />
       </div>
+
+      <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-gray-200 p-3">
+        <input
+          type="checkbox"
+          name="rollover"
+          checked={formData.rollover}
+          onChange={handleRolloverChange}
+          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+        />
+
+        <span>
+          <span className="block text-sm font-medium text-gray-700">
+            Roll over unused amount
+          </span>
+
+          <span className="block text-xs text-gray-500">
+            Anything left unspent from last month's budget for this category
+            is added to this month's allowance.
+          </span>
+        </span>
+      </label>
 
       <div className="flex justify-end gap-3">
         <Button

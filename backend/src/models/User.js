@@ -34,9 +34,26 @@ const userSchema = new mongoose.Schema(
       default: "INR",
       trim: true,
     },
-    // Both set only while a reset is pending. The token is stored as a hash so
-    // a leaked database cannot be used to take an account over, and the expiry
-    // is read back on lookup rather than trusted from the link.
+    // Set only while an OTP has been emailed and not yet verified. Hashed for
+    // the same reason a password is: a leaked database should not hand over a
+    // live code. Attempts is capped so a code can't be brute-forced within its
+    // own ten-minute window.
+    resetOtp: {
+      type: String,
+      select: false,
+    },
+    resetOtpExp: {
+      type: Date,
+      select: false,
+    },
+    resetOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    // Set only after resetOtp is verified. This is a short-lived session that
+    // authorizes the final "set new password" step without the OTP itself
+    // being reusable — the OTP is consumed the moment it's checked.
     resetToken: {
       type: String,
       select: false,

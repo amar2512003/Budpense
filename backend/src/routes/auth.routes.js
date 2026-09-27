@@ -9,6 +9,7 @@ import {
   loginRules,
   registerRules,
   resetPasswordRules,
+  verifyOtpRules,
 } from "../validators/auth.js";
 
 // Credential endpoints get their own budget on top of the global 100/15 min:
@@ -43,6 +44,16 @@ router.post(
   validate,
   authController.forgotPassword,
 );
-router.post("/reset-password/:token", resetPasswordRules, validate, authController.resetPassword);
+// Same budget as the other credential routes: five guesses per IP per window,
+// on top of the OTP's own five-attempt lockout, so a distributed guesser still
+// can't lean on this endpoint.
+router.post("/verify-otp", credentialLimiter(), verifyOtpRules, validate, authController.verifyOtp);
+router.post(
+  "/reset-password",
+  credentialLimiter(),
+  resetPasswordRules,
+  validate,
+  authController.resetPassword,
+);
 
 export default router;

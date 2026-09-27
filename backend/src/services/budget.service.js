@@ -51,8 +51,13 @@ async function spendByPeriod(userId, budgets) {
   return new Map(totals.map((total) => [periodKey(total._id), total.spent]));
 }
 
-function toPublicBudget(budget, rawSpent) {
+function toPublicBudget(budget, rawSpent, rawRolloverIn = 0) {
   const spent = toMoney(rawSpent);
+  const rolloverAmount = toMoney(rawRolloverIn);
+  // What this budget can actually absorb this month: its own amount plus
+  // whatever rolled in. Spend and progress are measured against this, not
+  // against the configured amount alone.
+  const totalAvailable = toMoney(budget.amount + rolloverAmount);
 
   return {
     _id: budget._id,
@@ -62,20 +67,65 @@ function toPublicBudget(budget, rawSpent) {
     // plain 9 leaves the field blank when a budget is opened for editing.
     month: String(budget.month).padStart(2, "0"),
     year: budget.year,
+    rollover: Boolean(budget.rollover),
+    rolloverAmount,
+    totalAvailable,
     spent,
     // Both deliberately unclamped. Remaining goes negative and percentage past
     // 100 when a budget is overspent, which is the fact the card needs; it
     // limits its own progress bar.
-    remaining: toMoney(budget.amount - spent),
-    percentage: Math.round((spent / budget.amount) * 10000) / 100,
-    isOverBudget: spent > budget.amount,
+    remaining: toMoney(totalAvailable - spent),
+    percentage: Math.round((spent / totalAvailable) * 10000) / 100,
+    isOverBudget: spent > totalAvailable,
   };
+}
+
+/**
+ * The unspent amount, if any, that rolls from the previous month's budget for
+ * the same category into this one — zero unless this budget opted in. Walks
+ * backward one month at a time, since a chain of rollover-enabled budgets
+ * carries whatever earlier months never used; a missing or rollover-off
+ * predecessor stops the chain there. depth guards against an unbroken chain
+ * running away on a very old account.
+ */
+async function computeRolloverIn(userId, budget, cache = new Map(), depth = 0) {
+  if (!budget.rollover || depth >= 24) return 0;
+
+  const prevMonth = budget.month === 1 ? 12 : budget.month - 1;
+  const prevYear = budget.month === 1 ? budget.year - 1 : budget.year;
+  const prevKey = periodKey({ year: prevYear, month: prevMonth, category: budget.category });
+
+  if (cache.has(prevKey)) return cache.get(prevKey);
+
+  const prevBudget = await Budget.findOne({
+    user: userId,
+    category: budget.category,
+    month: prevMonth,
+    year: prevYear,
+  }).lean();
+
+  if (!prevBudget) {
+    cache.set(prevKey, 0);
+    return 0;
+  }
+
+  const prevSpendMap = await spendByPeriod(userId, [prevBudget]);
+  const prevSpent = prevSpendMap.get(periodKey(prevBudget)) ?? 0;
+  const prevRolloverIn = await computeRolloverIn(userId, prevBudget, cache, depth + 1);
+  const prevAvailable = prevBudget.amount + prevRolloverIn;
+  // Only a genuine leftover carries forward; an overspent month never turns
+  // into a debt against the next one.
+  const leftover = Math.max(0, toMoney(prevAvailable - prevSpent));
+
+  cache.set(prevKey, leftover);
+  return leftover;
 }
 
 async function withSpend(userId, budget) {
   const spend = await spendByPeriod(userId, [budget]);
+  const rolloverIn = await computeRolloverIn(userId, budget);
 
-  return toPublicBudget(budget, spend.get(periodKey(budget)) ?? 0);
+  return toPublicBudget(budget, spend.get(periodKey(budget)) ?? 0, rolloverIn);
 }
 
 async function findOwned(userId, id) {
@@ -103,28 +153,39 @@ export async function listBudgets(userId) {
     .sort({ year: -1, month: -1, category: 1 })
     .lean();
   const spend = await spendByPeriod(userId, budgets);
+  const cache = new Map();
+  const results = [];
 
-  return budgets.map((budget) => toPublicBudget(budget, spend.get(periodKey(budget)) ?? 0));
+  // Sequential, not Promise.all: computeRolloverIn shares and fills the same
+  // cache across budgets, which only helps if one call finishes before the
+  // next starts reading it.
+  for (const budget of budgets) {
+    const rolloverIn = await computeRolloverIn(userId, budget, cache);
+
+    results.push(toPublicBudget(budget, spend.get(periodKey(budget)) ?? 0, rolloverIn));
+  }
+
+  return results;
 }
 
 export async function getBudget(userId, id) {
   return withSpend(userId, await findOwned(userId, id));
 }
 
-export async function createBudget(userId, { category, amount, month, year }) {
+export async function createBudget(userId, { category, amount, month, year, rollover }) {
   await assertNotDuplicate(userId, { category, month, year });
 
-  const budget = await Budget.create({ user: userId, category, amount, month, year });
+  const budget = await Budget.create({ user: userId, category, amount, month, year, rollover });
 
   return withSpend(userId, budget);
 }
 
-export async function updateBudget(userId, id, { category, amount, month, year }) {
+export async function updateBudget(userId, id, { category, amount, month, year, rollover }) {
   const budget = await findOwned(userId, id);
 
   await assertNotDuplicate(userId, { category, month, year }, budget._id);
 
-  Object.assign(budget, { category, amount, month, year });
+  Object.assign(budget, { category, amount, month, year, rollover: Boolean(rollover) });
   await budget.save();
 
   return withSpend(userId, budget);
