@@ -1,8 +1,14 @@
 import * as budgetService from "../services/budget.service.js";
 
 export async function create(req, res) {
-  const { category, amount, month, year } = req.body;
-  const budget = await budgetService.createBudget(req.user.id, { category, amount, month, year });
+  const { category, amount, month, year, rollover } = req.body;
+  const budget = await budgetService.createBudget(req.user.id, {
+    category,
+    amount,
+    month,
+    year,
+    rollover,
+  });
 
   res.status(201).json({ success: true, data: { budget } });
 }
@@ -20,12 +26,13 @@ export async function getOne(req, res) {
 }
 
 export async function update(req, res) {
-  const { category, amount, month, year } = req.body;
+  const { category, amount, month, year, rollover } = req.body;
   const budget = await budgetService.updateBudget(req.user.id, req.params.id, {
     category,
     amount,
     month,
     year,
+    rollover,
   });
 
   res.json({ success: true, data: { budget } });

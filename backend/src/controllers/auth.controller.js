@@ -38,12 +38,27 @@ export async function forgotPassword(req, res) {
   // varied here would turn the endpoint into a directory of who has an account.
   res.json({
     success: true,
-    data: { message: "If that account exists, a reset link has been sent" },
+    data: { message: "If that account exists, a reset code has been emailed to it" },
   });
 }
 
+export async function verifyOtp(req, res) {
+  const resetToken = await authService.verifyResetOtp({
+    email: req.body.email,
+    otp: req.body.otp,
+  });
+
+  // The client needs the raw token back to complete the next step — it is
+  // only ever readable here, once, right after it's issued.
+  res.json({ success: true, data: { resetToken } });
+}
+
 export async function resetPassword(req, res) {
-  await authService.resetPassword({ token: req.params.token, password: req.body.password });
+  await authService.resetPassword({
+    email: req.body.email,
+    resetToken: req.body.resetToken,
+    password: req.body.password,
+  });
 
   // Deliberately no cookie: resetting a password is not a sign-in, and the
   // client sends the user to the login form afterwards.

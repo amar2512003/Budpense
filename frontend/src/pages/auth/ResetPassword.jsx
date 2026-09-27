@@ -3,8 +3,8 @@
 import { useState } from "react";
 import {
   Link,
+  useLocation,
   useNavigate,
-  useParams,
 } from "react-router-dom";
 
 import Card from "../../components/ui/Card";
@@ -15,8 +15,10 @@ import { resetPassword } from "../../services/authService";
 import { isValidPassword } from "../../utils/validators";
 
 const ResetPassword = () => {
-  const { token } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const email = location.state?.email;
+  const resetToken = location.state?.resetToken;
 
   const [formData, setFormData] = useState({
     password: "",
@@ -28,6 +30,25 @@ const ResetPassword = () => {
     useState("");
   const [loading, setLoading] =
     useState(false);
+
+  // Only reachable by finishing the OTP step, which is what hands this page
+  // its resetToken. Anyone landing here without one has no session to spend.
+  if (!email || !resetToken) {
+    return (
+      <Card className="p-6 sm:p-8">
+        <p className="text-sm text-gray-600">
+          Your reset session has expired or was never started.
+        </p>
+
+        <Link
+          to="/forgot-password"
+          className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-700"
+        >
+          ← Back to Forgot password
+        </Link>
+      </Card>
+    );
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -66,10 +87,12 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      await resetPassword(
-        token,
-        formData.password
-      );
+      await resetPassword({
+        email,
+        resetToken,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+      });
 
       setSuccess(
         "Password reset successfully. Redirecting to login..."

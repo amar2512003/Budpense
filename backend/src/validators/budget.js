@@ -19,4 +19,7 @@ export const budgetRules = [
     .isInt({ min: 2020, max: 2100 })
     .withMessage("Year must be between 2020 and 2100")
     .toInt(),
+  // Optional and defaults to false server-side too (the schema default), so
+  // an older client that never sends this field still creates a plain budget.
+  body("rollover").optional().isBoolean().withMessage("Rollover must be true or false").toBoolean(),
 ];

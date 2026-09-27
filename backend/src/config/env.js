@@ -12,6 +12,8 @@ const REQUIRED = [
   "JWT_SECRET",
   "JWT_EXPIRES_IN",
   "CLIENT_URL",
+  "EMAIL_USER",
+  "EMAIL_PASS",
 ];
 
 const missing = REQUIRED.filter((key) => !process.env[key]?.trim());
@@ -38,6 +40,12 @@ const env = {
   // CORS cannot use a wildcard origin with credentialed requests, so this is required.
   clientUrl: process.env.CLIENT_URL,
   isProduction: process.env.NODE_ENV === "production",
+  // A Gmail account plus an app password (not the login password) — 2FA has
+  // to be on for Google to issue one. EMAIL_FROM falls back to the account
+  // itself since Gmail rejects a From address it doesn't own anyway.
+  emailUser: process.env.EMAIL_USER,
+  emailPass: process.env.EMAIL_PASS,
+  emailFrom: process.env.EMAIL_FROM?.trim() || process.env.EMAIL_USER,
 };
 
 export default env;
