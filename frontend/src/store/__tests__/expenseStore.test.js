@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import useExpenseStore, { PAGE_SIZE } from "../expenseStore";
+import useUIStore from "../uiStore";
 
 vi.mock("../../services/expenseService", () => ({
   getExpenses: vi.fn(),
@@ -119,6 +120,33 @@ describe("expenseStore", () => {
 
       expect(useExpenseStore.getState().expenses[0]._id).toBe("new");
       expect(useExpenseStore.getState().total).toBe(2);
+    });
+
+    it("shows a toast when the expense crossed a budget threshold", async () => {
+      service.createExpense.mockResolvedValue({
+        data: {
+          expense: expense("new"),
+          budgetAlert: {
+            category: "food", month: "09", year: 2025, level: "warning",
+            percentage: 82, spent: 4100, totalAvailable: 5000, overspent: 0,
+          },
+        },
+      });
+
+      await useExpenseStore.getState().addExpense({ amount: 200, category: "food", date: "2026-11-03" });
+
+      expect(useUIStore.getState().notification).toEqual({
+        visible: true, type: "warning", message: "Food (Sept 2025): 82% of ₹5,000.00 used",
+      });
+    });
+
+    it("shows no toast when nothing was crossed", async () => {
+      useUIStore.getState().hideNotification();
+      service.createExpense.mockResolvedValue({ data: { expense: expense("new"), budgetAlert: null } });
+
+      await useExpenseStore.getState().addExpense({ amount: 10, category: "food", date: "2026-11-03" });
+
+      expect(useUIStore.getState().notification.visible).toBe(false);
     });
 
     it("returns the record the API stored, not the form's own object", async () => {
