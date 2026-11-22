@@ -7,6 +7,7 @@ import {
   INCOME_SOURCES,
   PAYMENT_METHODS,
 } from "../constants/enums.js";
+import { isTimeZone } from "../utils/localToday.js";
 import { inList } from "./fields.js";
 
 const SORTS = ["newest", "oldest", "highest", "lowest"];
@@ -50,6 +51,7 @@ export const recordRules = (type) => [dateRule, ...entryRules(type)];
 const scheduleRules = [
   body("frequency").isIn(FREQUENCIES).withMessage(inList(FREQUENCIES)),
   optional(body("endDate").isISO8601()).withMessage("Enter a valid end date").toDate(),
+  optional(body("timeZone").custom(isTimeZone)).withMessage("Unknown time zone"),
 ];
 
 // Every missed date is created when the rule is saved, so how far back it can
@@ -59,17 +61,22 @@ const oneYearAgo = () => {
   return new Date(Date.UTC(now.getUTCFullYear() - 1, now.getUTCMonth(), now.getUTCDate()));
 };
 
-const recentStartRule = body("date")
-  .custom((date) => date >= oneYearAgo())
+const recentStartRule = optional(body("date").custom((date) => date >= oneYearAgo()))
   .withMessage("A repeating entry can start at most a year ago");
 
-// On create, date is the first occurrence. It can't be changed afterwards.
+// date is the first occurrence: required on create, optional on update, where
+// a new one moves the start.
 export const recurringCreateRules = (type) => [
   ...recordRules(type),
   recentStartRule,
   ...scheduleRules,
 ];
-export const recurringUpdateRules = (type) => [...entryRules(type), ...scheduleRules];
+export const recurringUpdateRules = (type) => [
+  ...entryRules(type),
+  optional(body("date").isISO8601()).withMessage("Enter a valid date").toDate(),
+  recentStartRule,
+  ...scheduleRules,
+];
 
 export const listRules = (type) => [
   // Escaping makes a search safe to run; the length cap keeps it cheap.

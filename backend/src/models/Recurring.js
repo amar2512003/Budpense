@@ -35,6 +35,12 @@ const recurringSchema = new mongoose.Schema(
     // Null once the rule has passed its end date.
     nextDate: Date,
     endDate: Date,
+    // The user's zone, so an entry dated today is created on their today
+    // rather than when UTC reaches it, up to 5.5 hours later in India.
+    timeZone: {
+      type: String,
+      default: "UTC",
+    },
   },
   // The hourly run and a user's edit can both save the same rule. Without a
   // version check the later save silently overwrites the earlier one.
