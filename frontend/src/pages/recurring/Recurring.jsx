@@ -32,12 +32,13 @@ const toForm = (rule) => ({
   paymentMethod: rule.paymentMethod || "",
   description: rule.description || "",
   frequency: rule.frequency,
+  date: (rule.startDate || "").slice(0, 10),
   endDate: (rule.endDate || "").slice(0, 10),
 });
 
 const RuleList = ({ type, rules, onEdit, onStop }) => {
   if (rules.length === 0) {
-    return <p className="py-6 text-center text-sm text-gray-500">Nothing repeats yet.</p>;
+    return <p className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">Nothing repeats yet.</p>;
   }
 
   return (
@@ -45,11 +46,11 @@ const RuleList = ({ type, rules, onEdit, onStop }) => {
       {rules.map((rule) => (
         <div
           key={rule._id}
-          className="flex items-center justify-between gap-4 rounded-lg border border-gray-100 p-4"
+          className="flex items-center justify-between gap-4 rounded-lg border border-gray-100 dark:border-gray-800 p-4"
         >
           <div className="min-w-0">
-            <p className="font-medium text-gray-900">{ruleName(type, rule)}</p>
-            <p className="truncate text-xs text-gray-500">
+            <p className="font-medium text-gray-900 dark:text-gray-100">{ruleName(type, rule)}</p>
+            <p className="truncate text-xs text-gray-500 dark:text-gray-400">
               {formatCurrency(rule.amount)} · {labelIn(FREQUENCIES, rule.frequency)} ·{" "}
               {rule.nextDate ? `Next on ${formatDate(rule.nextDate)}` : "Ended"}
               {rule.nextDate && rule.endDate && `, until ${formatDate(rule.endDate)}`}
@@ -60,14 +61,14 @@ const RuleList = ({ type, rules, onEdit, onStop }) => {
             <button
               type="button"
               onClick={() => onEdit(type, rule)}
-              className="rounded-md px-2 py-1 text-xs text-gray-600 hover:bg-gray-100"
+              className="rounded-md px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Edit
             </button>
             <button
               type="button"
               onClick={() => onStop(type, rule)}
-              className="rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+              className="rounded-md px-2 py-1 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
             >
               Stop
             </button>
@@ -127,6 +128,11 @@ const Recurring = () => {
       return;
     }
 
+    if (formData.endDate && formData.endDate < formData.date) {
+      setError("The end date can't be before the start date.");
+      return;
+    }
+
     try {
       await editRule(editing.type, editing.rule._id, {
         ...formData,
@@ -143,14 +149,14 @@ const Recurring = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Recurring</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Recurring</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Entries added for you on a schedule. Changes apply to future entries only.
         </p>
       </div>
 
       {storeError && (
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600" role="alert">
+        <div className="rounded-lg bg-red-50 dark:bg-red-950 p-4 text-sm text-red-600 dark:text-red-400" role="alert">
           {storeError}
         </div>
       )}
@@ -173,7 +179,7 @@ const Recurring = () => {
         {formData && (
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>
+              <div className="rounded-lg bg-red-50 dark:bg-red-950 p-3 text-sm text-red-600 dark:text-red-400">{error}</div>
             )}
 
             {isExpense && (
@@ -220,22 +226,36 @@ const Recurring = () => {
               />
             )}
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Select
-                label="Repeat"
-                name="frequency"
-                value={formData.frequency}
-                onChange={handleChange}
-                options={FREQUENCIES}
-                placeholder={null}
-              />
-              <Input
-                label="Ends on (optional)"
-                name="endDate"
-                type="date"
-                value={formData.endDate}
-                onChange={handleChange}
-              />
+            <Select
+              label="Repeat"
+              name="frequency"
+              value={formData.frequency}
+              onChange={handleChange}
+              options={FREQUENCIES}
+              placeholder={null}
+            />
+
+            <div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Starts on"
+                  name="date"
+                  type="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  required
+                />
+                <Input
+                  label="Ends on (optional)"
+                  name="endDate"
+                  type="date"
+                  value={formData.endDate}
+                  onChange={handleChange}
+                />
+              </div>
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                Moving the start earlier adds the entries missed in between.
+              </p>
             </div>
 
             <Input
