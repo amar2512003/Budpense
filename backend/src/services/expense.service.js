@@ -41,7 +41,7 @@ export function toPublicRecord({ user, __v, ...record }) {
  * unusable category on a record, and on an update it has to clear the field
  * rather than be quietly ignored, or a cleared payment method comes back.
  */
-function toPayload(type, body) {
+export function toPayload(type, body) {
   const payload = {};
 
   for (const field of WRITABLE_FIELDS[type]) {

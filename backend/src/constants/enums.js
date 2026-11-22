@@ -24,3 +24,5 @@ export const CATEGORIES = [
 export const PAYMENT_METHODS = ["cash", "upi", "card", "bank"];
 
 export const INCOME_SOURCES = ["salary", "freelancing", "business", "investment", "other"];
+
+export const FREQUENCIES = ["weekly", "monthly", "yearly"];
