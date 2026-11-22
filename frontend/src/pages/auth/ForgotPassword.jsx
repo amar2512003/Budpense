@@ -52,18 +52,18 @@ const ForgotPassword = () => {
   return (
     <Card className="p-6 sm:p-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Forgot password?
         </h2>
 
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Enter your email and we'll send you a
           6-digit code to reset your password.
         </p>
       </div>
 
       {error && (
-        <div className="mb-5 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+        <div className="mb-5 rounded-lg bg-red-50 dark:bg-red-950 p-3 text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
@@ -96,7 +96,7 @@ const ForgotPassword = () => {
       <div className="mt-6 text-center">
         <Link
           to="/login"
-          className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+          className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
         >
           ← Back to Login
         </Link>

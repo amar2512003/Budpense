@@ -103,7 +103,7 @@ const BudgetForm = ({
       className="space-y-5"
     >
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+        <div className="rounded-lg bg-red-50 dark:bg-red-950 p-3 text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
@@ -153,21 +153,21 @@ const BudgetForm = ({
         />
       </div>
 
-      <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-gray-200 p-3">
+      <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
         <input
           type="checkbox"
           name="rollover"
           checked={formData.rollover}
           onChange={handleRolloverChange}
-          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500"
         />
 
         <span>
-          <span className="block text-sm font-medium text-gray-700">
+          <span className="block text-sm font-medium text-gray-700 dark:text-gray-200">
             Roll over unused amount
           </span>
 
-          <span className="block text-xs text-gray-500">
+          <span className="block text-xs text-gray-500 dark:text-gray-400">
             Anything left unspent from last month's budget for this category
             is added to this month's allowance.
           </span>

@@ -12,7 +12,7 @@ const ExpenseFilters = ({
   setSort,
 }) => {
   return (
-    <div className="grid gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-3">
+    <div className="grid gap-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 md:grid-cols-3">
       <Input
         label="Search"
         placeholder="Search expenses..."

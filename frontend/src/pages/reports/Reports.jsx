@@ -30,36 +30,36 @@ const Reports = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Analyze your income, expenses and spending habits.
         </p>
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600" role="alert">
+        <div className="rounded-lg bg-red-50 dark:bg-red-950 p-4 text-sm text-red-600 dark:text-red-400" role="alert">
           {error}
         </div>
       )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <p className="text-sm text-gray-500">Total Income</p>
-          <p className="mt-2 text-2xl font-bold text-green-600">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Income</p>
+          <p className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
             {formatCurrency(report.totalIncome)}
           </p>
         </Card>
 
         <Card>
-          <p className="text-sm text-gray-500">Total Expenses</p>
-          <p className="mt-2 text-2xl font-bold text-red-600">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Expenses</p>
+          <p className="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
             {formatCurrency(report.totalExpense)}
           </p>
         </Card>
 
         <Card>
-          <p className="text-sm text-gray-500">Savings</p>
-          <p className="mt-2 text-2xl font-bold text-indigo-600">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Savings</p>
+          <p className="mt-2 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
             {formatCurrency(report.savings)}
           </p>
         </Card>
@@ -87,11 +87,11 @@ const Reports = () => {
         description="Observations based on your recorded transactions."
       >
         <div className="space-y-4">
-          <div className="rounded-lg bg-gray-50 p-4">
-            <p className="text-sm font-medium text-gray-900">
+          <div className="rounded-lg bg-gray-50 dark:bg-gray-950 p-4">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
               Highest spending category
             </p>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {report.highestCategory
                 ? `${report.highestCategory.name} is your largest expense category at ${formatCurrency(
                     report.highestCategory.value
@@ -100,9 +100,9 @@ const Reports = () => {
             </p>
           </div>
 
-          <div className="rounded-lg bg-gray-50 p-4">
-            <p className="text-sm font-medium text-gray-900">Savings</p>
-            <p className="mt-1 text-sm text-gray-500">
+          <div className="rounded-lg bg-gray-50 dark:bg-gray-950 p-4">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Savings</p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {report.totalIncome === 0 && report.totalExpense === 0
                 ? "Add income and expenses to see your savings summary."
                 : report.savings >= 0

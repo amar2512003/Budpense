@@ -7,7 +7,7 @@ const Loader = ({ fullScreen = false, size = "md" }) => {
 
   const loader = (
     <div
-      className={`${sizes[size]} animate-spin rounded-full border-4 border-gray-200 border-t-indigo-600`}
+      className={`${sizes[size]} animate-spin rounded-full border-4 border-gray-200 dark:border-gray-700 border-t-indigo-600`}
     />
   );
 

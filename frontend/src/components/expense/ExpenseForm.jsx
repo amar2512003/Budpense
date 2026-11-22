@@ -61,7 +61,7 @@ const ExpenseForm = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+        <div className="rounded-lg bg-red-50 dark:bg-red-950 p-3 text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
@@ -115,7 +115,7 @@ const ExpenseForm = ({
       />
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-gray-700">
+        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">
           Description
         </label>
 
@@ -125,7 +125,7 @@ const ExpenseForm = ({
           onChange={handleChange}
           placeholder="Add some notes..."
           rows={4}
-          className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          className="w-full resize-none rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
         />
       </div>
 

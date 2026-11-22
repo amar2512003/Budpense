@@ -26,15 +26,15 @@ const BudgetProgress = ({
     <div className="space-y-2">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
           {category}
         </span>
 
         <span
           className={`text-sm font-semibold ${
             isOverBudget
-              ? "text-red-600"
-              : "text-gray-700"
+              ? "text-red-600 dark:text-red-400"
+              : "text-gray-700 dark:text-gray-200"
           }`}
         >
           {formatCurrency(numericSpent)} /{" "}
@@ -43,7 +43,7 @@ const BudgetProgress = ({
       </div>
 
       {/* Progress bar */}
-      <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
+      <div className="h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
         <div
           className={`h-full rounded-full transition-all ${
             isOverBudget
@@ -58,7 +58,7 @@ const BudgetProgress = ({
 
       {/* Percentage */}
       <div className="flex justify-between">
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-gray-500 dark:text-gray-400">
           {isOverBudget
             ? "Budget exceeded"
             : `${100 - displayPercentage}% remaining`}
@@ -67,8 +67,8 @@ const BudgetProgress = ({
         <span
           className={`text-xs font-medium ${
             isOverBudget
-              ? "text-red-600"
-              : "text-gray-500"
+              ? "text-red-600 dark:text-red-400"
+              : "text-gray-500 dark:text-gray-400"
           }`}
         >
           {displayPercentage}%

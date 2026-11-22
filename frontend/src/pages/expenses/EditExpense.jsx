@@ -49,14 +49,14 @@ const EditExpense = () => {
 
   if (!selectedExpense) {
     return (
-      <div className="rounded-xl bg-white p-8 text-center">
-        <h2 className="font-semibold text-gray-900">
+      <div className="rounded-xl bg-white dark:bg-gray-900 p-8 text-center">
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100">
           Expense not found
         </h2>
 
         <button
           onClick={() => navigate("/app/expenses")}
-          className="mt-3 text-sm text-indigo-600 hover:underline"
+          className="mt-3 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
         >
           Back to expenses
         </button>
@@ -67,11 +67,11 @@ const EditExpense = () => {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Edit Expense
         </h1>
 
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Update your expense information.
         </p>
       </div>

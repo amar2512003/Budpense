@@ -8,18 +8,18 @@ const NotFound = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
       <div className="text-center">
 
-        <p className="text-7xl font-bold text-indigo-600">
+        <p className="text-7xl font-bold text-indigo-600 dark:text-indigo-400">
           404
         </p>
 
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+        <h1 className="mt-4 text-2xl font-bold text-gray-900 dark:text-gray-100">
           Page not found
         </h1>
 
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           The page you're looking for doesn't
           exist or may have been moved.
         </p>

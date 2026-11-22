@@ -96,36 +96,36 @@ const Profile = () => {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Profile</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Manage your personal information.
         </p>
       </div>
 
       <Card title="Personal Information" description="Update your account details.">
         {message && (
-          <div className="mb-5 rounded-lg bg-green-50 p-3 text-sm text-green-600">
+          <div className="mb-5 rounded-lg bg-green-50 dark:bg-green-950 p-3 text-sm text-green-600 dark:text-green-400">
             {message}
           </div>
         )}
 
         {error && (
-          <div className="mb-5 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+          <div className="mb-5 rounded-lg bg-red-50 dark:bg-red-950 p-3 text-sm text-red-600 dark:text-red-400">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100 text-xl font-bold text-indigo-600">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-950 text-xl font-bold text-indigo-600 dark:text-indigo-400">
               {user?.name?.charAt(0)?.toUpperCase() || "U"}
             </div>
 
             <div>
-              <h3 className="font-semibold text-gray-900">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                 {user?.name || "Your Profile"}
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 {user?.email || "Budpense account"}
               </p>
             </div>
@@ -159,8 +159,8 @@ const Profile = () => {
       <Card title="Security" description="Manage your account password.">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <p className="font-medium text-gray-900">Password</p>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="font-medium text-gray-900 dark:text-gray-100">Password</p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Change your password regularly to keep your account secure.
             </p>
           </div>
@@ -178,7 +178,7 @@ const Profile = () => {
       >
         <form onSubmit={handlePasswordSubmit} className="space-y-5">
           {passwordError && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded-lg bg-red-50 dark:bg-red-950 p-3 text-sm text-red-600 dark:text-red-400">
               {passwordError}
             </div>
           )}

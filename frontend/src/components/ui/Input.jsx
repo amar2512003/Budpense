@@ -26,10 +26,10 @@ const Input = ({
       {label && (
         <label
           htmlFor={name}
-          className="mb-1.5 block text-sm font-medium text-gray-700"
+          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200"
         >
           {label}
-          {required && <span className="ml-1 text-red-500">*</span>}
+          {required && <span className="ml-1 text-red-500 dark:text-red-400">*</span>}
         </label>
       )}
 
@@ -47,9 +47,9 @@ const Input = ({
             ${
               error
                 ? "border-red-500 focus:ring-2 focus:ring-red-200"
-                : "border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                : "border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             }
-            disabled:bg-gray-100 disabled:cursor-not-allowed
+            disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed
             ${className}`}
           {...props}
         />
@@ -61,14 +61,14 @@ const Input = ({
             disabled={disabled}
             aria-label={revealed ? "Hide password" : "Show password"}
             aria-pressed={revealed}
-            className="absolute inset-y-0 right-0 px-3 text-xs font-medium text-gray-500 transition hover:text-gray-700 disabled:cursor-not-allowed"
+            className="absolute inset-y-0 right-0 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 transition hover:text-gray-700 dark:hover:text-gray-200 disabled:cursor-not-allowed"
           >
             {revealed ? "Hide" : "Show"}
           </button>
         )}
       </div>
 
-      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+      {error && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{error}</p>}
     </div>
   );
 };

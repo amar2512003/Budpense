@@ -139,8 +139,8 @@ const Income = () => {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Income</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Income</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Track all your income sources.
           </p>
         </div>
@@ -150,15 +150,15 @@ const Income = () => {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
-          <p className="text-sm text-gray-500">Total Income</p>
-          <p className="mt-2 text-2xl font-bold text-green-600">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Income</p>
+          <p className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
             {formatCurrency(totalIncome)}
           </p>
         </Card>
 
         <Card>
-          <p className="text-sm text-gray-500">Income Entries</p>
-          <p className="mt-2 text-2xl font-bold text-gray-900">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Income Entries</p>
+          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
             {income.length}
           </p>
         </Card>
@@ -171,7 +171,7 @@ const Income = () => {
       />
 
       {storeError && (
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600" role="alert">
+        <div className="rounded-lg bg-red-50 dark:bg-red-950 p-4 text-sm text-red-600 dark:text-red-400" role="alert">
           {storeError}
         </div>
       )}
@@ -181,11 +181,11 @@ const Income = () => {
           <Loader />
         ) : filteredIncome.length === 0 ? (
           <div className="py-10 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
               ₹
             </div>
-            <h3 className="mt-3 font-medium text-gray-900">No income found</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <h3 className="mt-3 font-medium text-gray-900 dark:text-gray-100">No income found</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {search
                 ? "Try a different search term."
                 : "Start by adding your first income."}
@@ -196,17 +196,17 @@ const Income = () => {
             {filteredIncome.map((entry) => (
               <div
                 key={entry._id || entry.id}
-                className="flex items-center justify-between gap-4 rounded-lg border border-gray-100 p-4"
+                className="flex items-center justify-between gap-4 rounded-lg border border-gray-100 dark:border-gray-800 p-4"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-600">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400">
                     ↑
                   </div>
                   <div className="min-w-0">
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
                       {labelForSource(entry.source)}
                     </p>
-                    <p className="truncate text-xs text-gray-500">
+                    <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                       {formatDate(entry.date)}
                       {entry.description && ` • ${entry.description}`}
                     </p>
@@ -214,20 +214,20 @@ const Income = () => {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-                  <span className="font-semibold text-green-600">
+                  <span className="font-semibold text-green-600 dark:text-green-400">
                     + {formatCurrency(entry.amount)}
                   </span>
                   <button
                     type="button"
                     onClick={() => openForm(entry)}
-                    className="rounded-md px-2 py-1 text-xs text-gray-600 hover:bg-gray-100"
+                    className="rounded-md px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Edit
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDelete(entry._id || entry.id)}
-                    className="rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+                    className="rounded-md px-2 py-1 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
                   >
                     Delete
                   </button>
@@ -245,7 +245,7 @@ const Income = () => {
       >
         <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded-lg bg-red-50 dark:bg-red-950 p-3 text-sm text-red-600 dark:text-red-400">
               {error}
             </div>
           )}
@@ -282,7 +282,7 @@ const Income = () => {
           />
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+            <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">
               Description
             </label>
             <textarea
@@ -291,7 +291,7 @@ const Income = () => {
               onChange={handleChange}
               rows="3"
               placeholder="Optional description..."
-              className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="w-full resize-none rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
           </div>
 

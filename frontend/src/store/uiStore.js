@@ -2,7 +2,43 @@
 
 import { create } from "zustand";
 
+const getStoredDarkMode = () => {
+  try {
+    return typeof window !== "undefined" &&
+      window.localStorage.getItem("budpense-dark-mode") === "true";
+  } catch {
+    return false;
+  }
+};
+
+const applyDarkMode = (enabled) => {
+  if (typeof document !== "undefined") {
+    document.documentElement.classList.toggle("dark", enabled);
+  }
+};
+
+const initialDarkMode = getStoredDarkMode();
+applyDarkMode(initialDarkMode);
+
 const useUIStore = create((set) => ({
+  darkMode: initialDarkMode,
+
+  toggleDarkMode: () => {
+    set((state) => {
+      const darkMode = !state.darkMode;
+
+      try {
+        window.localStorage.setItem("budpense-dark-mode", String(darkMode));
+      } catch {
+        // The theme still applies for this session when storage is unavailable.
+      }
+
+      applyDarkMode(darkMode);
+
+      return { darkMode };
+    });
+  },
+
   // ==========================================
   // SIDEBAR
   // ==========================================

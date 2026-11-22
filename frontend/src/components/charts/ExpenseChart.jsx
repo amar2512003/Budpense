@@ -9,13 +9,18 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import useUIStore from "../../store/uiStore";
+import { getChartTheme } from "./chartTheme";
 
 const ExpenseChart = ({
   data = [],
 }) => {
+  const darkMode = useUIStore((state) => state.darkMode);
+  const { axisColor, gridColor, tooltipContent, tooltipText } = getChartTheme(darkMode);
+
   if (!data.length) {
     return (
-      <div className="flex h-72 items-center justify-center text-sm text-gray-500">
+      <div className="flex h-72 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
         No expense data available.
       </div>
     );
@@ -36,22 +41,34 @@ const ExpenseChart = ({
             bottom: 5,
           }}
         >
-          <CartesianGrid
-            strokeDasharray="3 3"
+          <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+
+          <XAxis
+            dataKey="date"
+            axisLine={{ stroke: gridColor }}
+            tickLine={{ stroke: gridColor }}
+            tick={{ fill: axisColor }}
           />
 
-          <XAxis dataKey="date" />
+          <YAxis
+            axisLine={{ stroke: gridColor }}
+            tickLine={{ stroke: gridColor }}
+            tick={{ fill: axisColor }}
+          />
 
-          <YAxis />
-
-          <Tooltip />
+          <Tooltip
+            contentStyle={tooltipContent}
+            labelStyle={tooltipText}
+            itemStyle={tooltipText}
+          />
 
           <Line
             type="monotone"
             dataKey="amount"
+            stroke={darkMode ? "#818cf8" : "#4f46e5"}
             strokeWidth={2}
-            dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
+            dot={{ r: 3, fill: darkMode ? "#818cf8" : "#4f46e5" }}
+            activeDot={{ r: 5, fill: darkMode ? "#818cf8" : "#4f46e5" }}
           />
         </LineChart>
       </ResponsiveContainer>

@@ -44,8 +44,8 @@ const Sidebar = ({
       className={`
         fixed left-0 top-0 z-40
         flex h-screen w-64 flex-col
-        border-r border-gray-200
-        bg-white
+        border-r border-gray-200 dark:border-gray-700
+        bg-white dark:bg-gray-900
         transition-transform
         duration-300
         lg:translate-x-0
@@ -57,10 +57,10 @@ const Sidebar = ({
       `}
     >
       {/* Logo */}
-      <div className="flex h-20 items-center border-b border-gray-200 px-6">
+      <div className="flex h-20 items-center border-b border-gray-200 dark:border-gray-700 px-6">
         <NavLink
           to="/app/dashboard"
-          className="text-2xl font-bold text-indigo-600"
+          className="text-2xl font-bold text-indigo-600 dark:text-indigo-400"
           onClick={onClose}
         >
           Budpense
@@ -82,8 +82,8 @@ const Sidebar = ({
               transition
               ${
                 isActive
-                  ? "bg-indigo-50 text-indigo-600"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
               }
               `
             }

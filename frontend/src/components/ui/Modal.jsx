@@ -43,16 +43,16 @@ const Modal = ({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`relative z-10 w-full rounded-xl bg-white shadow-xl ${sizes[size]}`}
+        className={`relative z-10 w-full rounded-xl bg-white dark:bg-gray-900 shadow-xl ${sizes[size]}`}
       >
         <div className="flex items-center justify-between border-b px-5 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {title}
           </h2>
 
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-lg p-1 text-gray-400 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300"
           >
             ✕
           </button>

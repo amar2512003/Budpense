@@ -8,6 +8,8 @@ import ExpenseList from "../../components/expense/ExpenseList";
 
 import useDebounce from "../../hooks/useDebounce";
 import useExpenseStore from "../../store/expenseStore";
+import { getExpenses } from "../../services/expenseService";
+import { downloadCsv } from "../../utils/exportCsv";
 
 const Expenses = () => {
   const navigate = useNavigate();
@@ -24,6 +26,8 @@ const Expenses = () => {
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
 
   // The search box fires on every keystroke; the request should not.
   const debouncedSearch = useDebounce(search, 400);
@@ -51,20 +55,95 @@ const Expenses = () => {
     }
   };
 
+  const handleDownloadCsv = async () => {
+    setExporting(true);
+    setExportError("");
+
+    try {
+      const filters = {
+        search: search.trim() || undefined,
+        category: category || undefined,
+        sort,
+        limit: 100,
+      };
+      const { data: firstPage } = await getExpenses({ ...filters, page: 1 });
+      const allExpenses = [...firstPage.items];
+
+      for (
+        let firstPageNumber = 2;
+        firstPageNumber <= firstPage.pages;
+        firstPageNumber += 10
+      ) {
+        const pageNumbers = Array.from(
+          { length: Math.min(10, firstPage.pages - firstPageNumber + 1) },
+          (_, index) => firstPageNumber + index,
+        );
+        const pageResponses = await Promise.all(
+          pageNumbers.map((pageNumber) =>
+            getExpenses({ ...filters, page: pageNumber }),
+          ),
+        );
+
+        allExpenses.push(...pageResponses.flatMap(({ data }) => data.items));
+      }
+
+      downloadCsv(
+        allExpenses,
+        [
+          {
+            label: "Title",
+            value: (expense) => expense.title || expense.description || "Expense",
+          },
+          { label: "Category", value: (expense) => expense.category },
+          { label: "Amount", value: (expense) => expense.amount },
+          {
+            label: "Date",
+            value: (expense) => String(expense.date || "").slice(0, 10),
+          },
+          {
+            label: "Payment method",
+            value: (expense) => expense.paymentMethod,
+          },
+          { label: "Description", value: (expense) => expense.description },
+        ],
+        "budpense-expenses.csv",
+      );
+    } catch {
+      setExportError("Unable to download expenses. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Expenses</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Expenses</h1>
 
-          <p className="mt-1 text-sm text-gray-500">Track and manage your spending.</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Track and manage your spending.</p>
         </div>
 
-        <Button onClick={() => navigate("/app/expenses/add")}>+ Add Expense</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={handleDownloadCsv}
+            disabled={exporting || loading}
+          >
+            {exporting ? "Preparing CSV..." : "Download CSV"}
+          </Button>
+          <Button onClick={() => navigate("/app/expenses/add")}>+ Add Expense</Button>
+        </div>
       </div>
 
+      {exportError && (
+        <div className="rounded-lg bg-red-50 dark:bg-red-950 p-4 text-sm text-red-600 dark:text-red-400" role="alert">
+          {exportError}
+        </div>
+      )}
+
       {error && (
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600" role="alert">
+        <div className="rounded-lg bg-red-50 dark:bg-red-950 p-4 text-sm text-red-600 dark:text-red-400" role="alert">
           {error}
         </div>
       )}
@@ -87,7 +166,7 @@ const Expenses = () => {
         />
 
         {pages > 1 && (
-          <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
+          <div className="mt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-4">
             <Button
               variant="secondary"
               disabled={page <= 1 || loading}
@@ -96,7 +175,7 @@ const Expenses = () => {
               Previous
             </Button>
 
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               Page {page} of {pages}
             </span>
 

@@ -25,49 +25,49 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Here&apos;s an overview of your finances.
         </p>
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600" role="alert">
+        <div className="rounded-lg bg-red-50 dark:bg-red-950 p-4 text-sm text-red-600 dark:text-red-400" role="alert">
           {error}
         </div>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
-          <p className="text-sm text-gray-500">Total Balance</p>
-          <p className="mt-2 text-2xl font-bold text-indigo-600">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Balance</p>
+          <p className="mt-2 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
             {formatCurrency(summary.balance)}
           </p>
-          <p className="mt-1 text-xs text-gray-500">This month</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">This month</p>
         </Card>
 
         <Card>
-          <p className="text-sm text-gray-500">Total Income</p>
-          <p className="mt-2 text-2xl font-bold text-green-600">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Income</p>
+          <p className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
             {formatCurrency(summary.totalIncome)}
           </p>
-          <p className="mt-1 text-xs text-gray-500">This month</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">This month</p>
         </Card>
 
         <Card>
-          <p className="text-sm text-gray-500">Total Expenses</p>
-          <p className="mt-2 text-2xl font-bold text-red-600">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Expenses</p>
+          <p className="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
             {formatCurrency(summary.totalExpense)}
           </p>
-          <p className="mt-1 text-xs text-gray-500">This month</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">This month</p>
         </Card>
 
         <Card>
-          <p className="text-sm text-gray-500">Savings Rate</p>
-          <p className="mt-2 text-2xl font-bold text-gray-900">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Savings Rate</p>
+          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
             {summary.savingsRate}%
           </p>
-          <p className="mt-1 text-xs text-gray-500">Of your income</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Of your income</p>
         </Card>
       </div>
 
@@ -96,7 +96,7 @@ const Dashboard = () => {
 
       <Card title="Recent Expenses" description="Your latest transactions.">
         {summary.recentExpenses.length === 0 ? (
-          <p className="py-6 text-center text-sm text-gray-500">
+          <p className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
             Add an expense to see it here.
           </p>
         ) : (
