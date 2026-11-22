@@ -5,12 +5,16 @@ import createHandlers from "../controllers/expense.controller.js";
 import protect from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
 import { idRule, listRules, recordRules } from "../validators/expense.js";
+import recurringRoutes from "./recurring.routes.js";
 
 const expenses = createHandlers(EXPENSE);
 const router = Router();
 
 // Every route here reads and writes the caller's own records only.
 router.use(protect);
+
+// Before /:id, which would otherwise take "recurring" as an id.
+router.use("/recurring", recurringRoutes(EXPENSE));
 
 router.post("/", recordRules(EXPENSE), validate, expenses.create);
 router.get("/", listRules(EXPENSE), validate, expenses.list);
