@@ -9,7 +9,12 @@ vi.mock("../../services/incomeService", () => ({
   getIncome: vi.fn(), createIncome: vi.fn(), updateIncome: vi.fn(), deleteIncome: vi.fn(),
 }));
 
+vi.mock("../../services/recurringService", () => ({
+  getRecurring: vi.fn(), createRecurring: vi.fn(), updateRecurring: vi.fn(), deleteRecurring: vi.fn(),
+}));
+
 const service = await import("../../services/incomeService");
+const recurringService = await import("../../services/recurringService");
 
 const entry = (id, overrides = {}) => ({
   _id: id, type: "income", amount: 60000, source: "salary",
@@ -67,6 +72,28 @@ describe("Income page", () => {
     await waitFor(() => expect(service.createIncome).toHaveBeenCalledWith(
       expect.objectContaining({ source: "freelancing", amount: 25000, date: "2026-09-04" }),
     ));
+  });
+
+  it("creates repeating income as a rule and reloads the list", async () => {
+    const user = userEvent.setup();
+    recurringService.createRecurring.mockResolvedValue({ data: { recurring: { _id: "r1" } } });
+    render(<Income />);
+    await screen.findByText(/no income found/i);
+    service.getIncome.mockResolvedValue(page([entry("generated")]));
+
+    await user.click(screen.getByRole("button", { name: /add income/i }));
+    await user.selectOptions(screen.getByLabelText(/source/i), "salary");
+    await user.type(screen.getByLabelText(/amount/i), "60000");
+    await user.type(screen.getByLabelText(/^date/i), "2026-09-01");
+    await user.selectOptions(screen.getByLabelText(/repeat/i), "monthly");
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: /add income/i }));
+
+    await waitFor(() => expect(recurringService.createRecurring).toHaveBeenCalledWith(
+      "income",
+      expect.objectContaining({ source: "salary", amount: 60000, date: "2026-09-01", frequency: "monthly" }),
+    ));
+    expect(service.createIncome).not.toHaveBeenCalled();
+    expect(await screen.findByText("Salary")).toBeInTheDocument();
   });
 
   it("keeps the form open and explains when the API rejects the entry", async () => {

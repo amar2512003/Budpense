@@ -26,6 +26,7 @@ import AddExpense from "../pages/expenses/AddExpense";
 import EditExpense from "../pages/expenses/EditExpense";
 import Budgets from "../pages/budgets/Budgets";
 import Income from "../pages/income/Income";
+import Recurring from "../pages/recurring/Recurring";
 import Reports from "../pages/reports/Reports";
 import Profile from "../pages/profile/Profile";
 
@@ -115,6 +116,11 @@ const AppRoutes = () => {
           <Route
             path="income"
             element={<Income />}
+          />
+
+          <Route
+            path="recurring"
+            element={<Recurring />}
           />
 
           <Route

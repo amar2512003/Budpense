@@ -8,7 +8,8 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "db": "node scripts/local-mongo.mjs",
-    "dev:local": "node scripts/wait-for-db.mjs && node --watch src/server.js"
+    "dev:local": "node scripts/wait-for-db.mjs && node --watch src/server.js",
+    "test": "node --test"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

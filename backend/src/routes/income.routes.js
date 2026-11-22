@@ -5,6 +5,7 @@ import createHandlers from "../controllers/expense.controller.js";
 import protect from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
 import { idRule, listRules, recordRules } from "../validators/expense.js";
+import recurringRoutes from "./recurring.routes.js";
 
 // The income side of the same collection: identical routes over the same
 // controller and service, pinned to the income type.
@@ -12,6 +13,9 @@ const income = createHandlers(INCOME);
 const router = Router();
 
 router.use(protect);
+
+// Before /:id, which would otherwise take "recurring" as an id.
+router.use("/recurring", recurringRoutes(INCOME));
 
 router.post("/", recordRules(INCOME), validate, income.create);
 router.get("/", listRules(INCOME), validate, income.list);

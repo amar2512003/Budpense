@@ -6,7 +6,9 @@ import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import Modal from "../../components/ui/Modal";
 import Loader from "../../components/ui/Loader";
+import RepeatFields from "../../components/recurring/RepeatFields";
 import useIncomeStore from "../../store/incomeStore";
+import useRecurringStore from "../../store/recurringStore";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { formatDate } from "../../utils/formatDate";
 import { sortByNewestDate, totalAmount } from "../../utils/finance";
@@ -17,6 +19,8 @@ const emptyForm = {
   amount: "",
   date: "",
   description: "",
+  repeat: "",
+  endDate: "",
 };
 
 
@@ -31,6 +35,8 @@ const Income = () => {
   const addIncome = useIncomeStore((state) => state.addIncome);
   const editIncome = useIncomeStore((state) => state.editIncome);
   const removeIncome = useIncomeStore((state) => state.removeIncome);
+  const addRule = useRecurringStore((state) => state.addRule);
+  const savingRule = useRecurringStore((state) => state.loading);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);
@@ -91,11 +97,21 @@ const Income = () => {
       return;
     }
 
-    const incomeData = { ...formData, amount: Number(formData.amount) };
+    if (formData.repeat && formData.endDate && formData.endDate < formData.date) {
+      setError("The end date can't be before the first date.");
+      return;
+    }
+
+    const { repeat, endDate, ...fields } = formData;
+    const incomeData = { ...fields, amount: Number(formData.amount) };
 
     try {
       if (editingIncome) {
         await editIncome(editingIncome._id, incomeData);
+      } else if (repeat) {
+        await addRule("income", { ...incomeData, frequency: repeat, endDate });
+        // The rule may have created entries back to its start date.
+        await fetchIncome();
       } else {
         await addIncome(incomeData);
       }
@@ -295,11 +311,19 @@ const Income = () => {
             />
           </div>
 
+          {!editingIncome && (
+            <RepeatFields
+              repeat={formData.repeat}
+              endDate={formData.endDate}
+              onChange={handleChange}
+            />
+          )}
+
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={closeForm}>
               Cancel
             </Button>
-            <Button type="submit" loading={loading}>
+            <Button type="submit" loading={loading || savingRule}>
               {editingIncome ? "Save Changes" : "Add Income"}
             </Button>
           </div>

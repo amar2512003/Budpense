@@ -4,6 +4,7 @@ import Card from "../../components/ui/Card";
 import ExpenseForm from "../../components/expense/ExpenseForm";
 
 import useExpenseStore from "../../store/expenseStore";
+import useRecurringStore from "../../store/recurringStore";
 
 const AddExpense = () => {
   const navigate = useNavigate();
@@ -16,8 +17,15 @@ const AddExpense = () => {
     (state) => state.loading
   );
 
+  const addRule = useRecurringStore((state) => state.addRule);
+  const savingRule = useRecurringStore((state) => state.loading);
+
   const handleSubmit = async (data) => {
-    await addExpense(data);
+    if (data.frequency) {
+      await addRule("expense", data);
+    } else {
+      await addExpense(data);
+    }
 
     navigate("/app/expenses");
   };
@@ -37,7 +45,7 @@ const AddExpense = () => {
       <Card>
         <ExpenseForm
           onSubmit={handleSubmit}
-          loading={loading}
+          loading={loading || savingRule}
           onCancel={() => navigate("/app/expenses")}
         />
       </Card>

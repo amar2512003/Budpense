@@ -35,3 +35,9 @@ export const SORT_OPTIONS = [
   { value: "highest", label: "Highest amount" },
   { value: "lowest", label: "Lowest amount" },
 ];
+
+export const FREQUENCIES = [
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
+];

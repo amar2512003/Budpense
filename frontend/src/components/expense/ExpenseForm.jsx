@@ -3,6 +3,7 @@ import { useState } from "react";
 import Input from "../ui/Input";
 import Select from "../ui/Select";
 import Button from "../ui/Button";
+import RepeatFields from "../recurring/RepeatFields";
 
 import { CATEGORIES, PAYMENT_METHODS } from "../../constants/enums";
 
@@ -12,6 +13,7 @@ const ExpenseForm = ({
   loading = false,
   onCancel,
 }) => {
+  const isNew = !initialData._id;
   const [formData, setFormData] = useState({
     title: initialData.title || "",
     amount: initialData.amount || "",
@@ -20,6 +22,8 @@ const ExpenseForm = ({
     date: (initialData.date || "").slice(0, 10),
     paymentMethod: initialData.paymentMethod || "",
     description: initialData.description || "",
+    repeat: "",
+    endDate: "",
   });
 
   const [error, setError] = useState("");
@@ -48,11 +52,17 @@ const ExpenseForm = ({
       return;
     }
 
+    if (formData.repeat && formData.endDate && formData.endDate < formData.date) {
+      setError("The end date can't be before the first date.");
+      return;
+    }
+
+    const { repeat, endDate, ...expense } = formData;
+    const payload = { ...expense, amount: Number(formData.amount) };
+
     try {
-      await onSubmit?.({
-        ...formData,
-        amount: Number(formData.amount),
-      });
+      // With a frequency, the parent saves a recurring rule instead.
+      await onSubmit?.(repeat ? { ...payload, frequency: repeat, endDate } : payload);
     } catch (err) {
       setError(err.message || "Something went wrong.");
     }
@@ -114,6 +124,14 @@ const ExpenseForm = ({
         options={PAYMENT_METHODS}
       />
 
+      {isNew && (
+        <RepeatFields
+          repeat={formData.repeat}
+          endDate={formData.endDate}
+          onChange={handleChange}
+        />
+      )}
+
       <div>
         <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">
           Description
@@ -141,7 +159,7 @@ const ExpenseForm = ({
         )}
 
         <Button type="submit" loading={loading}>
-          {initialData._id ? "Update Expense" : "Add Expense"}
+          {isNew ? "Add Expense" : "Update Expense"}
         </Button>
       </div>
     </form>

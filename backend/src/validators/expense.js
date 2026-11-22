@@ -3,6 +3,7 @@ import { body, param, query } from "express-validator";
 import {
   CATEGORIES,
   EXPENSE,
+  FREQUENCIES,
   INCOME_SOURCES,
   PAYMENT_METHODS,
 } from "../constants/enums.js";
@@ -22,13 +23,14 @@ const notApplicable = (field, advice) => query(field).not().exists().withMessage
 
 export const idRule = [param("id").isMongoId().withMessage("Invalid record id")];
 
-/** Same rules on create and update: both send the whole record. */
-export const recordRules = (type) => [
+const dateRule = body("date").isISO8601().withMessage("Enter a valid date").toDate();
+
+/** Everything an entry carries except its date. */
+const entryRules = (type) => [
   body("amount")
     .isFloat({ gt: 0 })
     .withMessage("Amount must be greater than 0")
     .toFloat(),
-  body("date").isISO8601().withMessage("Enter a valid date").toDate(),
   optional(body("description").trim().isLength({ max: 500 }))
     .withMessage("Description must be at most 500 characters"),
   ...(type === EXPENSE
@@ -41,6 +43,33 @@ export const recordRules = (type) => [
       ]
     : [body("source").isIn(INCOME_SOURCES).withMessage(inList(INCOME_SOURCES))]),
 ];
+
+/** Same rules on create and update: both send the whole record. */
+export const recordRules = (type) => [dateRule, ...entryRules(type)];
+
+const scheduleRules = [
+  body("frequency").isIn(FREQUENCIES).withMessage(inList(FREQUENCIES)),
+  optional(body("endDate").isISO8601()).withMessage("Enter a valid end date").toDate(),
+];
+
+// Every missed date is created when the rule is saved, so how far back it can
+// start bounds how many entries one request can write.
+const oneYearAgo = () => {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear() - 1, now.getUTCMonth(), now.getUTCDate()));
+};
+
+const recentStartRule = body("date")
+  .custom((date) => date >= oneYearAgo())
+  .withMessage("A repeating entry can start at most a year ago");
+
+// On create, date is the first occurrence. It can't be changed afterwards.
+export const recurringCreateRules = (type) => [
+  ...recordRules(type),
+  recentStartRule,
+  ...scheduleRules,
+];
+export const recurringUpdateRules = (type) => [...entryRules(type), ...scheduleRules];
 
 export const listRules = (type) => [
   // Escaping makes a search safe to run; the length cap keeps it cheap.

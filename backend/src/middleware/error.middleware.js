@@ -26,6 +26,9 @@ export default function errorMiddleware(err, req, res, next) {
   } else if (err instanceof mongoose.Error.CastError) {
     status = 400;
     message = `Invalid value for ${err.path}`;
+  } else if (err instanceof mongoose.Error.VersionError) {
+    status = 409;
+    message = "This record changed while you were saving it. Please try again.";
   } else if (err?.code === DUPLICATE_KEY) {
     status = 409;
     message = "That record already exists";

@@ -23,6 +23,11 @@ const Sidebar = ({
       icon: "↗",
     },
     {
+      name: "Recurring",
+      path: "/app/recurring",
+      icon: "↻",
+    },
+    {
       name: "Budgets",
       path: "/app/budgets",
       icon: "▣",
