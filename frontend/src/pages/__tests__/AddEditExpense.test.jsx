@@ -135,6 +135,16 @@ describe("EditExpense", () => {
     await waitFor(() => expect(service.updateExpense).toHaveBeenCalledWith("e1", expect.objectContaining({ amount: 1500 })));
   });
 
+  it("explains that editing an entry from a rule doesn't change the rule", async () => {
+    service.getExpenseById.mockResolvedValue({ data: { expense: { ...stored, recurring: "r1" } } });
+
+    showEdit();
+    await screen.findByDisplayValue("Cab");
+
+    expect(screen.getByText(/added by a repeating rule/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Recurring" })).toHaveAttribute("href", "/app/recurring");
+  });
+
   it("does not offer to repeat an existing entry", async () => {
     service.getExpenseById.mockResolvedValue({ data: { expense: stored } });
 
