@@ -15,7 +15,12 @@ vi.mock("../../services/expenseService", () => ({
   deleteExpense: vi.fn(),
 }));
 
+vi.mock("../../services/recurringService", () => ({
+  getRecurring: vi.fn(), createRecurring: vi.fn(), updateRecurring: vi.fn(), deleteRecurring: vi.fn(),
+}));
+
 const service = await import("../../services/expenseService");
+const recurringService = await import("../../services/recurringService");
 
 const stored = {
   _id: "e1", type: "expense", amount: 1200, category: "transport", title: "Cab",
@@ -60,6 +65,36 @@ describe("AddExpense", () => {
     expect(await screen.findByText("Amount must be greater than 0")).toBeInTheDocument();
     expect(screen.getByLabelText(/title/i)).toHaveValue("Lunch");
   });
+
+  it("sends a repeating expense to the recurring endpoint instead", async () => {
+    const user = userEvent.setup();
+    recurringService.createRecurring.mockResolvedValue({ data: { recurring: { _id: "r1" } } });
+    render(<MemoryRouter><AddExpense /></MemoryRouter>);
+
+    await fillNew(user);
+    await user.selectOptions(screen.getByLabelText(/repeat/i), "monthly");
+    await user.type(screen.getByLabelText(/ends on/i), "2026-12-31");
+    await user.click(screen.getByRole("button", { name: /add expense/i }));
+
+    await waitFor(() => expect(recurringService.createRecurring).toHaveBeenCalledWith(
+      "expense",
+      expect.objectContaining({ title: "Lunch", amount: 450, date: "2026-09-02", frequency: "monthly", endDate: "2026-12-31" }),
+    ));
+    expect(service.createExpense).not.toHaveBeenCalled();
+  });
+
+  it("refuses an end date before the first date", async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><AddExpense /></MemoryRouter>);
+
+    await fillNew(user);
+    await user.selectOptions(screen.getByLabelText(/repeat/i), "weekly");
+    await user.type(screen.getByLabelText(/ends on/i), "2026-09-01");
+    await user.click(screen.getByRole("button", { name: /add expense/i }));
+
+    expect(await screen.findByText(/end date can't be before/i)).toBeInTheDocument();
+    expect(recurringService.createRecurring).not.toHaveBeenCalled();
+  });
 });
 
 describe("EditExpense", () => {
@@ -98,6 +133,15 @@ describe("EditExpense", () => {
     await user.click(screen.getByRole("button", { name: /save|update/i }));
 
     await waitFor(() => expect(service.updateExpense).toHaveBeenCalledWith("e1", expect.objectContaining({ amount: 1500 })));
+  });
+
+  it("does not offer to repeat an existing entry", async () => {
+    service.getExpenseById.mockResolvedValue({ data: { expense: stored } });
+
+    showEdit();
+    await screen.findByDisplayValue("Cab");
+
+    expect(screen.queryByLabelText(/repeat/i)).not.toBeInTheDocument();
   });
 
   it("says so when the record is not there", async () => {

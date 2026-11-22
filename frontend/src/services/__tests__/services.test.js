@@ -10,6 +10,7 @@ const expenses = await import("../expenseService");
 const income = await import("../incomeService");
 const budgets = await import("../budgetService");
 const dashboard = await import("../dashboardService");
+const recurring = await import("../recurringService");
 
 const ok = { data: { success: true, data: {} } };
 
@@ -127,5 +128,19 @@ describe("dashboardService", () => {
     await dashboard.getDashboard();
 
     expect(api.get).toHaveBeenCalledWith("/dashboard");
+  });
+});
+
+describe("recurringService", () => {
+  it("keeps each type's rules under its own collection", async () => {
+    await recurring.getRecurring("expense");
+    await recurring.createRecurring("income", { amount: 1, source: "salary", frequency: "monthly" });
+    await recurring.updateRecurring("expense", "r1", { amount: 2 });
+    await recurring.deleteRecurring("income", "r2");
+
+    expect(api.get).toHaveBeenCalledWith("/expenses/recurring");
+    expect(api.post).toHaveBeenCalledWith("/income/recurring", { amount: 1, source: "salary", frequency: "monthly" });
+    expect(api.put).toHaveBeenCalledWith("/expenses/recurring/r1", { amount: 2 });
+    expect(api.delete).toHaveBeenCalledWith("/income/recurring/r2");
   });
 });
