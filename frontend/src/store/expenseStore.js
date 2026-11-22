@@ -7,7 +7,9 @@ import {
   getExpenses,
   updateExpense,
 } from "../services/expenseService";
+import { alertMessage } from "../utils/budgetAlerts";
 import { toErrorMessage } from "../utils/errorMessage";
+import useUIStore from "./uiStore";
 
 // The API caps a page at 100. Filtering and sorting are sent with the request
 // rather than applied here, so a filter searches everything the account holds
@@ -67,6 +69,12 @@ const useExpenseStore = create((set, get) => ({
 
     try {
       const { data } = await createExpense(expenseData);
+
+      if (data.budgetAlert) {
+        useUIStore
+          .getState()
+          .showNotification(alertMessage(data.budgetAlert), data.budgetAlert.level);
+      }
 
       // Put it straight into the list so the page reflects the new record
       // without a second request.

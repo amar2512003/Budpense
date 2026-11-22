@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import Card from "../../components/ui/Card";
 import Loader from "../../components/ui/Loader";
+import BudgetAlerts from "../../components/budget/BudgetAlerts";
 import ExpenseCard from "../../components/expense/ExpenseCard";
 import CategoryChart from "../../components/charts/CategoryChart";
 import ExpenseChart from "../../components/charts/ExpenseChart";
@@ -36,6 +37,8 @@ const Dashboard = () => {
           {error}
         </div>
       )}
+
+      <BudgetAlerts alerts={summary.budgetAlerts} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>

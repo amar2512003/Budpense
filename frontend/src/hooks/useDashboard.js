@@ -13,6 +13,7 @@ const EMPTY = {
   dailyExpense: [],
   monthlyTrend: [],
   recentExpenses: [],
+  budgetAlerts: [],
 };
 
 /**
