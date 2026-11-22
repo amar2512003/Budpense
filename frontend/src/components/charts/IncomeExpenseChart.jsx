@@ -10,13 +10,18 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import useUIStore from "../../store/uiStore";
+import { getChartTheme } from "./chartTheme";
 
 const IncomeExpenseChart = ({
   data = [],
 }) => {
+  const darkMode = useUIStore((state) => state.darkMode);
+  const { axisColor, gridColor, tooltipContent, tooltipText } = getChartTheme(darkMode);
+
   if (!data.length) {
     return (
-      <div className="flex h-72 items-center justify-center text-sm text-gray-500">
+      <div className="flex h-72 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
         No income or expense data available.
       </div>
     );
@@ -37,27 +42,40 @@ const IncomeExpenseChart = ({
             bottom: 5,
           }}
         >
-          <CartesianGrid
-            strokeDasharray="3 3"
+          <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+
+          <XAxis
+            dataKey="month"
+            axisLine={{ stroke: gridColor }}
+            tickLine={{ stroke: gridColor }}
+            tick={{ fill: axisColor }}
           />
 
-          <XAxis dataKey="month" />
+          <YAxis
+            axisLine={{ stroke: gridColor }}
+            tickLine={{ stroke: gridColor }}
+            tick={{ fill: axisColor }}
+          />
 
-          <YAxis />
+          <Tooltip
+            contentStyle={tooltipContent}
+            labelStyle={tooltipText}
+            itemStyle={tooltipText}
+          />
 
-          <Tooltip />
-
-          <Legend />
+          <Legend wrapperStyle={{ color: axisColor }} />
 
           <Bar
             dataKey="income"
             name="Income"
+            fill={darkMode ? "#4ade80" : "#16a34a"}
             radius={[4, 4, 0, 0]}
           />
 
           <Bar
             dataKey="expense"
             name="Expense"
+            fill={darkMode ? "#f87171" : "#dc2626"}
             radius={[4, 4, 0, 0]}
           />
         </BarChart>

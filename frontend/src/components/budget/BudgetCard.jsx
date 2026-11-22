@@ -25,21 +25,21 @@ const BudgetCard = ({
   const isOverBudget = spent > totalAvailable;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 shadow-sm transition hover:shadow-md">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="flex items-center gap-2 font-semibold text-gray-900">
+          <h3 className="flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100">
             {budget.category || "Budget"}
 
             {budget.rollover && (
-              <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600">
+              <span className="rounded-full bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-400">
                 Rollover
               </span>
             )}
           </h3>
 
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             {budget.month || "Monthly Budget"}
           </p>
         </div>
@@ -47,14 +47,14 @@ const BudgetCard = ({
         <div className="flex gap-1">
           <button
             onClick={() => onEdit?.(budget)}
-            className="rounded-md px-2 py-1 text-xs text-gray-600 hover:bg-gray-100"
+            className="rounded-md px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             Edit
           </button>
 
           <button
             onClick={() => onDelete?.(budget)}
-            className="rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+            className="rounded-md px-2 py-1 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
           >
             Delete
           </button>
@@ -64,14 +64,14 @@ const BudgetCard = ({
       {/* Amount */}
       <div className="mt-5 flex items-end justify-between">
         <div>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             {formatCurrency(spent)}
           </p>
 
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             spent of {formatCurrency(totalAvailable)}
             {rolloverAmount > 0 && (
-              <span className="text-gray-400">
+              <span className="text-gray-400 dark:text-gray-300">
                 {" "}
                 (incl. {formatCurrency(rolloverAmount)} rolled over)
               </span>
@@ -82,8 +82,8 @@ const BudgetCard = ({
         <span
           className={`text-sm font-semibold ${
             isOverBudget
-              ? "text-red-600"
-              : "text-indigo-600"
+              ? "text-red-600 dark:text-red-400"
+              : "text-indigo-600 dark:text-indigo-400"
           }`}
         >
           {Math.round(
@@ -94,7 +94,7 @@ const BudgetCard = ({
       </div>
 
       {/* Progress */}
-      <div className="mt-4 h-2 overflow-hidden rounded-full bg-gray-100">
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
         <div
           className={`h-full rounded-full transition-all ${
             isOverBudget
@@ -109,15 +109,15 @@ const BudgetCard = ({
 
       {/* Remaining / exceeded */}
       <div className="mt-3 flex justify-between text-xs">
-        <span className="text-gray-500">
+        <span className="text-gray-500 dark:text-gray-400">
           {isOverBudget ? "Exceeded by" : "Remaining"}
         </span>
 
         <span
           className={`font-medium ${
             isOverBudget
-              ? "text-red-600"
-              : "text-gray-700"
+              ? "text-red-600 dark:text-red-400"
+              : "text-gray-700 dark:text-gray-200"
           }`}
         >
           {formatCurrency(

@@ -94,11 +94,11 @@ const Budgets = () => {
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             Budgets
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Set spending limits and stay on track.
           </p>
         </div>
@@ -110,7 +110,7 @@ const Budgets = () => {
 
       {/* Error */}
       {error && (
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
+        <div className="rounded-lg bg-red-50 dark:bg-red-950 p-4 text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
@@ -124,15 +124,15 @@ const Budgets = () => {
           <Loader />
         ) : budgets.length === 0 ? (
           <div className="py-12 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-xl">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-xl">
               ₹
             </div>
 
-            <h3 className="mt-4 font-semibold text-gray-900">
+            <h3 className="mt-4 font-semibold text-gray-900 dark:text-gray-100">
               No budgets yet
             </h3>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Create your first budget to start
               controlling your spending.
             </p>

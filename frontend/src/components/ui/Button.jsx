@@ -9,21 +9,21 @@ const Button = ({
   onClick,
 }) => {
   const baseStyles =
-    "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60";
+    "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:cursor-not-allowed disabled:opacity-60";
 
   const variants = {
     primary:
       "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500",
     secondary:
-      "bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-gray-400",
+      "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 focus:ring-gray-400",
     danger:
       "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
     success:
       "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",
     outline:
-      "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-indigo-500",
+      "border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 focus:ring-indigo-500",
     ghost:
-      "bg-transparent text-gray-600 hover:bg-gray-100 focus:ring-gray-400",
+      "bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-gray-400",
   };
 
   const sizes = {

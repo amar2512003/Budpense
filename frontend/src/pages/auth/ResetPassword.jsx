@@ -36,13 +36,13 @@ const ResetPassword = () => {
   if (!email || !resetToken) {
     return (
       <Card className="p-6 sm:p-8">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-gray-300">
           Your reset session has expired or was never started.
         </p>
 
         <Link
           to="/forgot-password"
-          className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-700"
+          className="mt-4 inline-block text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
         >
           ← Back to Forgot password
         </Link>
@@ -116,23 +116,23 @@ const ResetPassword = () => {
   return (
     <Card className="p-6 sm:p-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Reset password
         </h2>
 
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Create a new password for your account.
         </p>
       </div>
 
       {error && (
-        <div className="mb-5 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+        <div className="mb-5 rounded-lg bg-red-50 dark:bg-red-950 p-3 text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mb-5 rounded-lg bg-green-50 p-3 text-sm text-green-600">
+        <div className="mb-5 rounded-lg bg-green-50 dark:bg-green-950 p-3 text-sm text-green-600 dark:text-green-400">
           {success}
         </div>
       )}
@@ -173,7 +173,7 @@ const ResetPassword = () => {
       <div className="mt-6 text-center">
         <Link
           to="/login"
-          className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+          className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
         >
           ← Back to Login
         </Link>

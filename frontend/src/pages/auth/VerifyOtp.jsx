@@ -33,13 +33,13 @@ const VerifyOtp = () => {
   if (!email) {
     return (
       <Card className="p-6 sm:p-8">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-gray-300">
           Start by entering the email address on your account.
         </p>
 
         <Link
           to="/forgot-password"
-          className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-700"
+          className="mt-4 inline-block text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
         >
           ← Back to Forgot password
         </Link>
@@ -96,23 +96,23 @@ const VerifyOtp = () => {
   return (
     <Card className="p-6 sm:p-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Enter the code
         </h2>
 
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           We sent a 6-digit code to {email}. It expires in 10 minutes.
         </p>
       </div>
 
       {error && (
-        <div className="mb-5 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+        <div className="mb-5 rounded-lg bg-red-50 dark:bg-red-950 p-3 text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
 
       {resent && (
-        <div className="mb-5 rounded-lg bg-green-50 p-3 text-sm text-green-600">
+        <div className="mb-5 rounded-lg bg-green-50 dark:bg-green-950 p-3 text-sm text-green-600 dark:text-green-400">
           A new code has been sent.
         </div>
       )}
@@ -147,7 +147,7 @@ const VerifyOtp = () => {
       <div className="mt-6 flex items-center justify-between text-sm">
         <Link
           to="/login"
-          className="font-medium text-indigo-600 hover:text-indigo-700"
+          className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
         >
           ← Back to Login
         </Link>
@@ -156,7 +156,7 @@ const VerifyOtp = () => {
           type="button"
           onClick={handleResend}
           disabled={resending}
-          className="font-medium text-indigo-600 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {resending ? "Resending…" : "Resend code"}
         </button>
