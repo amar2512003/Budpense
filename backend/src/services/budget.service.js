@@ -4,6 +4,7 @@ import { EXPENSE } from "../constants/enums.js";
 import Budget from "../models/Budget.js";
 import Expense from "../models/Expense.js";
 import ApiError from "../utils/apiError.js";
+import { alertLevel, toAlert } from "../utils/budgetAlert.js";
 import toMoney from "../utils/money.js";
 import monthRange from "../utils/monthRange.js";
 
@@ -148,10 +149,7 @@ async function assertNotDuplicate(userId, { category, month, year }, excludeId) 
   }
 }
 
-export async function listBudgets(userId) {
-  const budgets = await Budget.find({ user: userId })
-    .sort({ year: -1, month: -1, category: 1 })
-    .lean();
+async function withSpendAll(userId, budgets) {
   const spend = await spendByPeriod(userId, budgets);
   const cache = new Map();
   const results = [];
@@ -166,6 +164,44 @@ export async function listBudgets(userId) {
   }
 
   return results;
+}
+
+export async function listBudgets(userId) {
+  const budgets = await Budget.find({ user: userId })
+    .sort({ year: -1, month: -1, category: 1 })
+    .lean();
+
+  return withSpendAll(userId, budgets);
+}
+
+/** One month's budgets with the same figures the budget page shows. */
+export async function budgetsForMonth(userId, year, month) {
+  const budgets = await Budget.find({ user: userId, year, month }).sort({ category: 1 }).lean();
+
+  return withSpendAll(userId, budgets);
+}
+
+/**
+ * The alert for an expense just added, if it took its category's budget for
+ * that month across 80% or 100%. Null when it crossed nothing.
+ */
+export async function alertForNewExpense(userId, expense) {
+  const budget = await Budget.findOne({
+    user: userId,
+    category: expense.category,
+    year: expense.date.getUTCFullYear(),
+    month: expense.date.getUTCMonth() + 1,
+  }).lean();
+
+  if (!budget) return null;
+
+  const current = await withSpend(userId, budget);
+  const alert = toAlert(current);
+  // Rounded, or 4096.03 - 96.03 comes out a hair under 4000 and repeats a
+  // warning the user already had.
+  const before = alertLevel(toMoney(current.spent - expense.amount), current.totalAvailable);
+
+  return alert && alert.level !== before ? alert : null;
 }
 
 export async function getBudget(userId, id) {
