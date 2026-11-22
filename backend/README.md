@@ -26,6 +26,11 @@ request that needs the value.
 
 `.env` is never committed; `.env.example` is the template.
 
+`npm test` runs the tests against a throwaway in-memory MongoDB.
+
+The server creates due recurring entries at boot and then hourly; see
+`Recurring` in the plan.
+
 ## Endpoints
 
 Everything is under `/api`. Only the five session routes are public; every other
@@ -46,6 +51,8 @@ route needs the cookie.
 | GET · PUT · DELETE | `/expenses/:id` | Read · replace · delete |
 | POST · GET | `/income` | The same five routes over the income side |
 | GET · PUT · DELETE | `/income/:id` | of the same collection |
+| POST · GET | `/expenses/recurring`, `/income/recurring` | Create a repeating entry · list rules |
+| PUT · DELETE | `/expenses/recurring/:id`, `/income/recurring/:id` | Edit future entries · stop |
 | POST · GET | `/budgets` | Create · list, each with computed spend |
 | GET · PUT · DELETE | `/budgets/:id` | Read · replace · delete |
 | GET | `/dashboard` | This month summarised, plus a six-month trend |
