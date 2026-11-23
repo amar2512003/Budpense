@@ -57,6 +57,39 @@ describe("Recurring page", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("moves the start date", async () => {
+    const user = userEvent.setup();
+    service.updateRecurring.mockResolvedValue({ data: { recurring: rent } });
+    render(<Recurring />);
+    await screen.findByText("Rent");
+
+    await user.click(screen.getAllByRole("button", { name: "Edit" })[0]);
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByLabelText(/starts on/i)).toHaveValue("2026-09-01");
+
+    await user.clear(within(dialog).getByLabelText(/starts on/i));
+    await user.type(within(dialog).getByLabelText(/starts on/i), "2026-07-01");
+    await user.click(within(dialog).getByRole("button", { name: /save/i }));
+
+    await waitFor(() => expect(service.updateRecurring).toHaveBeenCalledWith(
+      "expense", "r1", expect.objectContaining({ date: "2026-07-01" }),
+    ));
+  });
+
+  it("refuses an end date before the start", async () => {
+    const user = userEvent.setup();
+    render(<Recurring />);
+    await screen.findByText("Rent");
+
+    await user.click(screen.getAllByRole("button", { name: "Edit" })[0]);
+    const dialog = screen.getByRole("dialog");
+    await user.type(within(dialog).getByLabelText(/ends on/i), "2026-08-01");
+    await user.click(within(dialog).getByRole("button", { name: /save/i }));
+
+    expect(await within(dialog).findByText(/end date can't be before the start/i)).toBeInTheDocument();
+    expect(service.updateRecurring).not.toHaveBeenCalled();
+  });
+
   it("stops a rule after confirmation", async () => {
     const user = userEvent.setup();
     vi.spyOn(window, "confirm").mockReturnValue(true);

@@ -154,7 +154,7 @@ describe("recurring entries", () => {
   it("does not fill in dates that passed while the rule had ended", async () => {
     const rule = await createRule(userId, "expense", rent({ date: daysAgo(28), endDate: daysAgo(21) }));
 
-    await updateRule(userId, "expense", rule._id, { ...rent(), endDate: undefined });
+    await updateRule(userId, "expense", rule._id, { ...rent(), date: daysAgo(28), endDate: undefined });
 
     const dates = (await entriesOf(rule)).map((entry) => entry.date.getTime());
     assert.deepEqual(dates, [daysAgo(28), daysAgo(21), daysAgo(0)].map((date) => date.getTime()));
@@ -179,6 +179,55 @@ describe("recurring entries", () => {
     stale.occurrences += 1;
 
     await assert.rejects(stale.save(), mongoose.Error.VersionError);
+  });
+
+  it("creates an entry dated today in the user's zone before UTC reaches that date", async () => {
+    const start = new Date("2030-01-01T00:00:00Z");
+    // 00:13 on 1 Jan in India; still 31 Dec in UTC.
+    const justAfterMidnightInIndia = new Date("2029-12-31T18:43:00Z");
+    const india = await createRule(userId, "income", {
+      amount: 2000, source: "investment", date: start, frequency: "weekly", timeZone: "Asia/Kolkata",
+    });
+    const utc = await createRule(userId, "income", {
+      amount: 2000, source: "investment", date: start, frequency: "weekly",
+    });
+
+    await generateDue(justAfterMidnightInIndia);
+
+    assert.equal((await entriesOf(india)).length, 1);
+    assert.equal((await entriesOf(utc)).length, 0);
+  });
+
+  it("fills the missing periods when the start moves earlier", async () => {
+    // Started today, then its one entry was moved back two weeks by hand.
+    const rule = await createRule(userId, "expense", rent({ date: daysAgo(0) }));
+    await Expense.updateOne({ recurring: rule._id }, { date: daysAgo(14) });
+
+    const updated = await updateRule(userId, "expense", rule._id, { ...rent(), date: daysAgo(14) });
+
+    const dates = (await entriesOf(rule)).map((entry) => entry.date.getTime());
+    assert.deepEqual(dates, [daysAgo(14), daysAgo(7), daysAgo(0)].map((date) => date.getTime()));
+    assert.equal(updated.startDate.getTime(), daysAgo(14).getTime());
+    assert.equal(updated.nextDate.getTime(), daysAgo(-7).getTime());
+  });
+
+  it("doesn't double up periods that already have an entry on another day", async () => {
+    const rule = await createRule(userId, "expense", rent({ date: daysAgo(14) }));
+
+    const updated = await updateRule(userId, "expense", rule._id, { ...rent(), date: daysAgo(17) });
+
+    const dates = (await entriesOf(rule)).map((entry) => entry.date.getTime());
+    assert.deepEqual(dates, [daysAgo(14), daysAgo(7), daysAgo(0)].map((date) => date.getTime()));
+    assert.equal(updated.nextDate.getTime(), daysAgo(-4).getTime());
+  });
+
+  it("refuses a new start after the end date", async () => {
+    const rule = await createRule(userId, "expense", rent({ date: daysAgo(14), endDate: daysAgo(7) }));
+
+    await assert.rejects(
+      updateRule(userId, "expense", rule._id, { ...rent(), date: daysAgo(3), endDate: daysAgo(7) }),
+      { status: 400 },
+    );
   });
 
   it("hides other users' rules", async () => {

@@ -3,6 +3,7 @@ import { useState } from "react";
 import Input from "../ui/Input";
 import Select from "../ui/Select";
 import Button from "../ui/Button";
+import RecurringEntryNote from "../recurring/RecurringEntryNote";
 import RepeatFields from "../recurring/RepeatFields";
 
 import { CATEGORIES, PAYMENT_METHODS } from "../../constants/enums";
@@ -75,6 +76,8 @@ const ExpenseForm = ({
           {error}
         </div>
       )}
+
+      {initialData.recurring && <RecurringEntryNote />}
 
       <Input
         label="Title"

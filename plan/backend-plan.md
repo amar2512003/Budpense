@@ -225,7 +225,9 @@ Half-open range avoids the off-by-one at midnight on the last day. Compute the w
   "categoryBreakdown": [{ "name": "Bills", "value": 5500 }],
   "dailyExpense":      [{ "date": "2026-09-02", "amount": 450 }],
   "monthlyTrend":      [{ "month": "2026-04", "income": 60000, "expense": 17500 }],
-  "recentExpenses":    []
+  "recentExpenses":    [],
+  "budgetAlerts":      [{ "category": "food", "month": "11", "year": 2026, "level": "warning",
+                          "percentage": 85, "spent": 4250, "totalAvailable": 5000, "overspent": 0 }]
 }
 ```
 
@@ -235,6 +237,7 @@ Half-open range avoids the off-by-one at midnight on the last day. Compute the w
 - `dailyExpense` → `ExpenseChart`. Return ISO dates; the component formats to `02 Sep`.
 - `monthlyTrend` → `IncomeExpenseChart`, last 6 months. **Months with no activity must still appear with zeros** — a bare `$group` drops them and the chart's x-axis compresses.
 - `recentExpenses` → 4 most recent, matching `sortByNewestDate(expenses).slice(0, 4)`.
+- `budgetAlerts` (#30) → this month's budgets at `warning` (≥ 80%) or `over` (≥ 100%) of `totalAvailable`, the same figure the budget card uses, so rollover counts. Compared on raw amounts, not the rounded percentage. `POST /expenses` also returns `budgetAlert` when that expense moved its budget across a threshold, else `null`; the client shows it as a toast. Dismissals are per month, category and level in `localStorage`, so a dismissed warning reappears once the category goes over.
 
 `Reports.jsx` uses the same three charts over a wider range, so it reuses this endpoint — no separate reports endpoint.
 

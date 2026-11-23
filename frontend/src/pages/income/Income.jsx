@@ -6,6 +6,7 @@ import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import Modal from "../../components/ui/Modal";
 import Loader from "../../components/ui/Loader";
+import RecurringEntryNote from "../../components/recurring/RecurringEntryNote";
 import RepeatFields from "../../components/recurring/RepeatFields";
 import useIncomeStore from "../../store/incomeStore";
 import useRecurringStore from "../../store/recurringStore";
@@ -265,6 +266,8 @@ const Income = () => {
               {error}
             </div>
           )}
+
+          {editingIncome?.recurring && <RecurringEntryNote />}
 
           <Select
             label="Income Source"

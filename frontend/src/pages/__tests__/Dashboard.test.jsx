@@ -34,6 +34,26 @@ describe("Dashboard", () => {
     await waitFor(() => expect(service.getDashboard).toHaveBeenCalledTimes(1));
   });
 
+  it("shows budget alerts from the API", async () => {
+    window.localStorage.clear();
+    service.getDashboard.mockResolvedValue({
+      data: {
+        ...summary,
+        budgetAlerts: [{
+          category: "bills",
+          month: String(new Date().getUTCMonth() + 1).padStart(2, "0"),
+          year: new Date().getUTCFullYear(),
+          level: "over",
+          percentage: 110, spent: 5500, totalAvailable: 5000, overspent: 500,
+        }],
+      },
+    });
+
+    showDashboard();
+
+    expect(await screen.findByText("Bills: ₹500.00 over your ₹5,000.00 budget")).toBeInTheDocument();
+  });
+
   it("shows the totals the API computed", async () => {
     showDashboard();
 

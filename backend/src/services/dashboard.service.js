@@ -1,11 +1,12 @@
 import mongoose from "mongoose";
 
 import { EXPENSE, INCOME } from "../constants/enums.js";
-import Budget from "../models/Budget.js";
 import Expense from "../models/Expense.js";
+import { toAlert } from "../utils/budgetAlert.js";
 import toMoney from "../utils/money.js";
 import monthRange from "../utils/monthRange.js";
 
+import { budgetsForMonth } from "./budget.service.js";
 import { toPublicRecord } from "./expense.service.js";
 
 const TREND_MONTHS = 6;
@@ -101,7 +102,7 @@ export async function getDashboard(userId) {
   const balance = toMoney(totalIncome - totalExpense);
 
   const [budgets, recentExpenses] = await Promise.all([
-    Budget.find({ user: userId, month, year }).select("amount").lean(),
+    budgetsForMonth(userId, year, month),
     Expense.find({ user: userId, type: EXPENSE })
       .sort({ date: -1, _id: -1 })
       .limit(RECENT_EXPENSES)
@@ -132,5 +133,6 @@ export async function getDashboard(userId) {
       expense: totalFor(period, EXPENSE),
     })),
     recentExpenses: recentExpenses.map(toPublicRecord),
+    budgetAlerts: budgets.map(toAlert).filter(Boolean),
   };
 }

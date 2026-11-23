@@ -1,5 +1,7 @@
 import { matchedData } from "express-validator";
 
+import { EXPENSE } from "../constants/enums.js";
+import { alertForNewExpense } from "../services/budget.service.js";
 import * as expenseService from "../services/expense.service.js";
 
 /**
@@ -11,8 +13,18 @@ export default function createHandlers(type) {
   return {
     async create(req, res) {
       const record = await expenseService.createRecord(req.user.id, type, req.body);
+      const data = { [type]: record };
 
-      res.status(201).json({ success: true, data: { [type]: record } });
+      if (type === EXPENSE) {
+        // The expense is already saved. Failing the request here would invite
+        // the user to submit it again and record it twice.
+        data.budgetAlert = await alertForNewExpense(req.user.id, record).catch((error) => {
+          console.error("Budget alert check failed:", error.message);
+          return null;
+        });
+      }
+
+      res.status(201).json({ success: true, data });
     },
 
     async list(req, res) {

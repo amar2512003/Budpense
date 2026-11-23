@@ -139,8 +139,9 @@ describe("recurringService", () => {
     await recurring.deleteRecurring("income", "r2");
 
     expect(api.get).toHaveBeenCalledWith("/expenses/recurring");
-    expect(api.post).toHaveBeenCalledWith("/income/recurring", { amount: 1, source: "salary", frequency: "monthly" });
-    expect(api.put).toHaveBeenCalledWith("/expenses/recurring/r1", { amount: 2 });
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    expect(api.post).toHaveBeenCalledWith("/income/recurring", { amount: 1, source: "salary", frequency: "monthly", timeZone });
+    expect(api.put).toHaveBeenCalledWith("/expenses/recurring/r1", { amount: 2, timeZone });
     expect(api.delete).toHaveBeenCalledWith("/income/recurring/r2");
   });
 });
